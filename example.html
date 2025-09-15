@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BugRecorder 示例</title>
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .demo-section { 
+      margin: 30px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #0056b3; }
+    input, textarea, select {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .form-group { margin: 15px 0; }
+    label { display: block; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <h1>BugRecorder 功能演示</h1>
+  
+  <div class="demo-section">
+    <h2>初始化选项</h2>
+    <button onclick="initBar()">bar模式</button>
+    <button onclick="initHiddenBar()">hidden_bar模式</button>
+    <button onclick="initVConsole()">vConsole模式</button>
+    <button onclick="destroyRecorder()">销毁录制器</button>
+  </div>
+
+  <div class="demo-section">
+    <h2>用户操作测试</h2>
+    <button id="test-button" onclick="testClick()">点击测试按钮</button>
+    <button onclick="testAlert()">显示弹窗</button>
+    <a href="#demo" onclick="testLink()">测试链接</a>
+    
+    <div class="form-group">
+      <label for="test-input">文本输入:</label>
+      <input type="text" id="test-input" placeholder="在此输入文字">
+    </div>
+    
+    <div class="form-group">
+      <label for="test-password">密码输入:</label>
+      <input type="password" id="test-password" placeholder="密码不会被记录">
+    </div>
+    
+    <div class="form-group">
+      <label for="test-select">下拉选择:</label>
+      <select id="test-select">
+        <option value="option1">选项1</option>
+        <option value="option2">选项2</option>
+        <option value="option3">选项3</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="test-textarea">文本域:</label>
+      <textarea id="test-textarea" rows="3" placeholder="多行文本输入"></textarea>
+    </div>
+  </div>
+
+  <div class="demo-section">
+    <h2>网络请求测试</h2>
+    <button onclick="testXHR()">发送XHR请求</button>
+    <button onclick="testFetch()">发送Fetch请求</button>
+    <button onclick="testFormData()">发送表单数据</button>
+  </div>
+
+  <div class="demo-section">
+    <h2>控制台日志测试</h2>
+    <button onclick="testConsoleLog()">console.log</button>
+    <button onclick="testConsoleError()">console.error</button>
+    <button onclick="testConsoleWarn()">console.warn</button>
+    <button onclick="testError()">抛出错误</button>
+  </div>
+
+  <div class="demo-section">
+    <h2>页面跳转测试</h2>
+    <button onclick="testURLChange()">更改URL</button>
+    <button onclick="testHistoryPush()">History Push</button>
+  </div>
+
+  <div class="demo-section">
+    <h2>使用说明</h2>
+    <p><strong>录制流程:</strong></p>
+    <ol>
+      <li>选择一种模式进行初始化</li>
+      <li>点击开始录制按钮</li>
+      <li>在页面上执行各种操作</li>
+      <li>使用截图和备注功能</li>
+      <li>点击停止录制</li>
+      <li>查看剪贴板中的Markdown报告</li>
+    </ol>
+    
+    <p><strong>快捷键:</strong> <kbd>Ctrl + Alt + R</kbd> (hidden_bar模式)</p>
+  </div>
+
+  <!-- 依赖库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>
+  
+  <!-- BugRecorder -->
+  <script src="./dist/index.js"></script>
+
+  <script>
+    let recorder = null;
+    let vConsole = null;
+
+    function initBar() {
+      destroyRecorder();
+      recorder = new BugRecorder();
+      recorder.init({ show: 'bar' });
+      console.log('BugRecorder initialized in bar mode');
+    }
+
+    function initHiddenBar() {
+      destroyRecorder();
+      recorder = new BugRecorder();
+      recorder.init({ show: 'hidden_bar' });
+      console.log('BugRecorder initialized in hidden_bar mode. Press Ctrl+Alt+R to toggle visibility');
+    }
+
+    function initVConsole() {
+      destroyRecorder();
+      if (!vConsole) {
+        vConsole = new VConsole();
+      }
+      recorder = new BugRecorder();
+      recorder.init({ show: 'vConsole' });
+      console.log('BugRecorder initialized in vConsole mode');
+    }
+
+    function destroyRecorder() {
+      if (recorder) {
+        recorder.destroy();
+        recorder = null;
+        console.log('BugRecorder destroyed');
+      }
+    }
+
+    // 测试函数
+    function testClick() {
+      console.log('Test button clicked');
+      alert('按钮点击测试');
+    }
+
+    function testAlert() {
+      alert('这是一个测试弹窗');
+    }
+
+    function testLink() {
+      console.log('Link clicked');
+    }
+
+    function testXHR() {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/1');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function() {
+        console.log('XHR Response:', xhr.responseText);
+      };
+      xhr.send();
+    }
+
+    function testFetch() {
+      fetch('https://jsonplaceholder.typicode.com/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: 'Test Post',
+          body: 'This is a test post',
+          userId: 1,
+        }),
+      })
+      .then(response => response.json())
+      .then(data => console.log('Fetch Response:', data))
+      .catch(error => console.error('Fetch Error:', error));
+    }
+
+    function testFormData() {
+      const formData = new FormData();
+      formData.append('name', 'test');
+      formData.append('value', '123');
+      
+      fetch('https://httpbin.org/post', {
+        method: 'POST',
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => console.log('FormData Response:', data))
+      .catch(error => console.error('FormData Error:', error));
+    }
+
+    function testConsoleLog() {
+      console.log('This is a test log message', { data: 'example' });
+    }
+
+    function testConsoleError() {
+      console.error('This is a test error message', new Error('Test error'));
+    }
+
+    function testConsoleWarn() {
+      console.warn('This is a test warning message');
+    }
+
+    function testError() {
+      throw new Error('This is a test thrown error');
+    }
+
+    function testURLChange() {
+      window.location.hash = '#test-' + Date.now();
+    }
+
+    function testHistoryPush() {
+      history.pushState({}, 'Test Page', '/test-' + Date.now());
+    }
+
+    // 页面加载完成后自动初始化bar模式
+    window.addEventListener('load', function() {
+      setTimeout(initBar, 1000);
+    });
+  </script>
+</body>
+</html>

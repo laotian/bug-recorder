@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.vscode/
+.idea/
+coverage/
+.nyc_output/
+*.tgz
+*.tar.gz
+browser-use-temp-profile

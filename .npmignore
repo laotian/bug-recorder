@@ -1,0 +1,13 @@
+src/
+node_modules/
+*.log
+.DS_Store
+.vscode/
+.idea/
+coverage/
+.nyc_output/
+example.html
+webpack.config.js
+tsconfig.json
+PRD.md
+.claude/settings.local.json
