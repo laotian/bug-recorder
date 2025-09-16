@@ -46,6 +46,12 @@ class BugRecorder {
     }
 
     this.config = { ...config };
+    
+    // 设置截图目标元素
+    if (config.screenshotElement) {
+      this.screenshot.setScreenshotElement(config.screenshotElement);
+    }
+    
     this.setupEventListeners();
     this.initializeUI();
     this.isInitialized = true;

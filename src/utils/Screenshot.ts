@@ -4,6 +4,7 @@ declare const html2canvas: any;
 
 export class Screenshot {
   private onScreenshot?: (data: ScreenshotEvent) => void;
+  private screenshotElement?: string;
 
   private isRecorderElement(element: HTMLElement): boolean {
     if (element.id === 'bug-recorder-floating-bar' || 
@@ -34,12 +35,15 @@ export class Screenshot {
         throw new Error('html2canvas is not available. Please include html2canvas library.');
       }
 
-      const canvas = await html2canvas(document.body, {
+      // 获取目标元素，如果指定了 screenshotElement 则使用该元素，否则使用 document.body
+      const targetElement = this.getTargetElement();
+      
+      const canvas = await html2canvas(targetElement, {
         useCORS: true,
         allowTaint: true,
         scale: 0.8,
-        height: window.innerHeight,
-        width: window.innerWidth,
+        height: targetElement === document.body ? window.innerHeight : targetElement.scrollHeight,
+        width: targetElement === document.body ? window.innerWidth : targetElement.scrollWidth,
         scrollX: 0,
         scrollY: 0,
         ignoreElements: (element: HTMLElement) => {
@@ -68,14 +72,17 @@ export class Screenshot {
         throw new Error('html2canvas is not available. Please include html2canvas library.');
       }
 
-      const canvas = await html2canvas(document.documentElement, {
+      // 获取目标元素，如果指定了 screenshotElement 则使用该元素，否则使用 document.documentElement
+      const targetElement = this.getTargetElement() || document.documentElement;
+      
+      const canvas = await html2canvas(targetElement, {
         useCORS: true,
         allowTaint: true,
         scale: 0.8,
-        height: window.innerHeight,
-        width: window.innerWidth,
-        x: window.scrollX,
-        y: window.scrollY,
+        height: targetElement === document.documentElement ? window.innerHeight : Math.min(targetElement.scrollHeight, window.innerHeight),
+        width: targetElement === document.documentElement ? window.innerWidth : Math.min(targetElement.scrollWidth, window.innerWidth),
+        x: targetElement === document.documentElement ? window.scrollX : 0,
+        y: targetElement === document.documentElement ? window.scrollY : 0,
         scrollX: 0,
         scrollY: 0,
         ignoreElements: (element: HTMLElement) => {
@@ -108,12 +115,15 @@ export class Screenshot {
       const originalScrollLeft = window.scrollX;
 
       try {
-        const canvas = await html2canvas(document.body, {
+        // 获取目标元素，如果指定了 screenshotElement 则使用该元素，否则使用 document.body
+        const targetElement = this.getTargetElement();
+        
+        const canvas = await html2canvas(targetElement, {
           useCORS: true,
           allowTaint: true,
           scale: 0.6,
-          height: document.body.scrollHeight,
-          width: document.body.scrollWidth,
+          height: targetElement === document.body ? document.body.scrollHeight : targetElement.scrollHeight,
+          width: targetElement === document.body ? document.body.scrollWidth : targetElement.scrollWidth,
           scrollX: 0,
           scrollY: 0,
           ignoreElements: (element: HTMLElement) => {
@@ -143,6 +153,26 @@ export class Screenshot {
     onScreenshot?: (data: ScreenshotEvent) => void;
   }): void {
     this.onScreenshot = callbacks.onScreenshot;
+  }
+
+  public setScreenshotElement(selector?: string): void {
+    this.screenshotElement = selector;
+  }
+
+  private getTargetElement(): HTMLElement {
+    if (this.screenshotElement) {
+      try {
+        const element = document.querySelector(this.screenshotElement) as HTMLElement;
+        if (element) {
+          return element;
+        } else {
+          console.warn(`Screenshot target element not found: ${this.screenshotElement}, falling back to document.body`);
+        }
+      } catch (error) {
+        console.warn(`Invalid CSS selector: ${this.screenshotElement}, falling back to document.body`);
+      }
+    }
+    return document.body;
   }
 
   public static isHtml2CanvasAvailable(): boolean {

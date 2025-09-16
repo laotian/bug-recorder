@@ -2,6 +2,7 @@ export type ShowMode = 'bar' | 'hidden_bar' | 'vConsole';
 
 export interface BugRecorderConfig {
   show: ShowMode | any; // 'bar' | 'hidden_bar' | vConsole instance
+  screenshotElement?: string; // CSS selector for screenshot target element
 }
 
 export interface RecordEvent {
