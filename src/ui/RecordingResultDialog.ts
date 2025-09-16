@@ -36,8 +36,11 @@ export class RecordingResultDialog {
             ></textarea>
           </div>
           <div class="dialog-footer">
-            <button id="close-dialog-btn" class="dialog-btn close-btn-text">关闭</button>
-            <button id="copy-dialog-btn" class="dialog-btn copy-btn">复制</button>
+            <button id="copy-cli-btn" class="dialog-btn copy-cli-btn">复制命令行</button>
+            <div class="dialog-footer-right">
+              <button id="close-dialog-btn" class="dialog-btn close-btn-text">关闭</button>
+              <button id="copy-dialog-btn" class="dialog-btn copy-btn">复制录制内容</button>
+            </div>
           </div>
         </div>
       </div>
@@ -133,9 +136,14 @@ export class RecordingResultDialog {
           padding: 16px 20px;
           border-top: 1px solid #e0e0e0;
           display: flex;
-          justify-content: flex-end;
-          gap: 12px;
+          justify-content: space-between;
+          align-items: center;
           background: #f8f9fa;
+        }
+        
+        #bug-recorder-result-dialog .dialog-footer-right {
+          display: flex;
+          gap: 12px;
         }
         
         #bug-recorder-result-dialog .dialog-btn {
@@ -177,6 +185,26 @@ export class RecordingResultDialog {
           background: #28a745;
           border-color: #28a745;
         }
+        
+        #bug-recorder-result-dialog .copy-cli-btn {
+          background: #6c757d;
+          color: #fff;
+          border-color: #6c757d;
+        }
+        
+        #bug-recorder-result-dialog .copy-cli-btn:hover {
+          background: #5a6268;
+          border-color: #545b62;
+        }
+        
+        #bug-recorder-result-dialog .copy-cli-btn:active {
+          background: #495057;
+        }
+        
+        #bug-recorder-result-dialog .copy-cli-btn.copied {
+          background: #28a745;
+          border-color: #28a745;
+        }
       </style>
     `;
   }
@@ -197,6 +225,7 @@ export class RecordingResultDialog {
     const closeBtn = this.element.querySelector('.close-btn') as HTMLButtonElement;
     const closeDialogBtn = this.element.querySelector('#close-dialog-btn') as HTMLButtonElement;
     const copyBtn = this.element.querySelector('#copy-dialog-btn') as HTMLButtonElement;
+    const copyCliBtn = this.element.querySelector('#copy-cli-btn') as HTMLButtonElement;
     const overlay = this.element.querySelector('.dialog-overlay') as HTMLDivElement;
 
     closeBtn.addEventListener('click', () => {
@@ -209,6 +238,10 @@ export class RecordingResultDialog {
 
     copyBtn.addEventListener('click', () => {
       this.copyContent();
+    });
+
+    copyCliBtn.addEventListener('click', () => {
+      this.copyCliCommand();
     });
 
     // 点击遮罩层关闭对话框
@@ -256,8 +289,50 @@ export class RecordingResultDialog {
         copyBtn.classList.add('copied');
         
         setTimeout(() => {
-          copyBtn.textContent = '复制';
+          copyBtn.textContent = '复制录制内容';
           copyBtn.classList.remove('copied');
+        }, 2000);
+      } catch (fallbackError) {
+        console.error('Fallback copy failed:', fallbackError);
+      }
+    }
+  }
+
+  private async copyCliCommand(): Promise<void> {
+    const copyCliBtn = this.element.querySelector('#copy-cli-btn') as HTMLButtonElement;
+    const cliCommand = 'npx --registry=https://registry.npmmirror.com codebyai-bug-recorder save';
+    
+    try {
+      await navigator.clipboard.writeText(cliCommand);
+      
+      // 显示复制成功反馈
+      const originalText = copyCliBtn.textContent;
+      copyCliBtn.textContent = '已复制';
+      copyCliBtn.classList.add('copied');
+      
+      setTimeout(() => {
+        copyCliBtn.textContent = originalText;
+        copyCliBtn.classList.remove('copied');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Failed to copy CLI command to clipboard:', error);
+      
+      // 降级方案：使用execCommand
+      try {
+        const tempInput = document.createElement('input');
+        tempInput.value = cliCommand;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        
+        copyCliBtn.textContent = '已复制';
+        copyCliBtn.classList.add('copied');
+        
+        setTimeout(() => {
+          copyCliBtn.textContent = '复制命令行';
+          copyCliBtn.classList.remove('copied');
         }, 2000);
       } catch (fallbackError) {
         console.error('Fallback copy failed:', fallbackError);
