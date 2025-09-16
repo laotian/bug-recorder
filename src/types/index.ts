@@ -1,7 +1,7 @@
 export type ShowMode = 'bar' | 'hidden_bar' | 'vConsole';
 
 export interface BugRecorderConfig {
-  show: ShowMode;
+  show: ShowMode | any; // 'bar' | 'hidden_bar' | vConsole instance
 }
 
 export interface RecordEvent {

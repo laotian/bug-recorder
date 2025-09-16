@@ -3,6 +3,7 @@ import { RecordManager } from './core/RecordManager';
 import { FloatingBar } from './ui/FloatingBar';
 import { NoteInput } from './ui/NoteInput';
 import { VConsoleIntegration } from './ui/VConsoleIntegration';
+import { RecordingResultDialog } from './ui/RecordingResultDialog';
 import { UserActionListener } from './listeners/UserActionListener';
 import { UrlChangeListener } from './listeners/UrlChangeListener';
 import { ConsoleListener } from './listeners/ConsoleListener';
@@ -17,6 +18,7 @@ class BugRecorder {
   private floatingBar?: FloatingBar;
   private noteInput?: NoteInput;
   private vConsoleIntegration?: VConsoleIntegration;
+  private recordingResultDialog?: RecordingResultDialog;
   private userActionListener: UserActionListener;
   private urlChangeListener: UrlChangeListener;
   private consoleListener: ConsoleListener;
@@ -115,22 +117,20 @@ class BugRecorder {
       onNote: () => this.showNoteInput()
     };
 
-    switch (this.config.show) {
-      case 'bar':
-        this.initFloatingBar(callbacks, true);
-        break;
-
-      case 'hidden_bar':
-        this.initFloatingBar(callbacks, false);
-        this.initKeyboardShortcuts();
-        break;
-
-      case 'vConsole':
-        this.initVConsoleIntegration(callbacks);
-        break;
+    if (this.config.show === 'bar') {
+      this.initFloatingBar(callbacks, true);
+    } else if (this.config.show === 'hidden_bar') {
+      this.initFloatingBar(callbacks, false);
+      this.initKeyboardShortcuts();
+    } else if (this.config.show === 'vConsole' || (typeof this.config.show === 'object' && this.config.show.addPlugin)) {
+      this.initVConsoleIntegration(callbacks);
+    } else {
+      console.warn('Unknown show mode, falling back to bar mode');
+      this.initFloatingBar(callbacks, true);
     }
 
     this.initNoteInput();
+    this.initRecordingResultDialog();
   }
 
   private initFloatingBar(callbacks: any, visible: boolean): void {
@@ -161,10 +161,26 @@ class BugRecorder {
 
   private initVConsoleIntegration(callbacks: any): void {
     this.vConsoleIntegration = new VConsoleIntegration();
-    const initialized = this.vConsoleIntegration.init();
+    
+    // Check if config.show is a vConsole instance
+    const vConsoleInstance = (typeof this.config.show === 'object' && this.config.show.addPlugin) ? 
+      this.config.show : undefined;
+    
+    const initialized = this.vConsoleIntegration.init(vConsoleInstance);
     
     if (initialized) {
-      this.vConsoleIntegration.setEventListeners(callbacks);
+      // Initialize floating bar for vConsole mode (hidden by default)
+      this.initFloatingBar(callbacks, false);
+      
+      // Set VConsole-specific callbacks
+      this.vConsoleIntegration.setEventListeners({
+        onShowFloatingBar: () => {
+          this.floatingBar?.show();
+        },
+        onHideFloatingBar: () => {
+          this.floatingBar?.hide();
+        }
+      });
     } else {
       console.warn('VConsole not available, falling back to floating bar mode');
       this.config.show = 'bar';
@@ -181,6 +197,15 @@ class BugRecorder {
       },
       onCancel: () => {
         // Do nothing on cancel
+      }
+    });
+  }
+
+  private initRecordingResultDialog(): void {
+    this.recordingResultDialog = new RecordingResultDialog();
+    this.recordingResultDialog.setEventListeners({
+      onClose: () => {
+        // Dialog closed
       }
     });
   }
@@ -247,12 +272,9 @@ class BugRecorder {
       const summary = this.markdownExporter.generateSummary(events);
       const markdown = summary + this.markdownExporter.exportToMarkdown(events);
       
-      this.markdownExporter.copyToClipboard(markdown).then(() => {
-        this.showUIMessage(`录制完成！已复制${events.length}条记录到剪贴板`, 'success');
-      }).catch((error) => {
-        console.error('Failed to copy to clipboard:', error);
-        this.showUIMessage('录制完成！但复制到剪贴板失败', 'error');
-      });
+      // 显示录制结果对话框
+      this.recordingResultDialog?.show(markdown);
+      this.showUIMessage(`录制完成！共记录${events.length}条操作`, 'success');
     } catch (error) {
       console.error('Failed to export data:', error);
       this.showUIMessage('导出数据失败', 'error');
@@ -262,7 +284,7 @@ class BugRecorder {
   private showUIMessage(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
     this.vConsoleIntegration?.showMessage(message, type);
     
-    if (this.config.show !== 'vConsole') {
+    if (this.config.show !== 'vConsole' && !(typeof this.config.show === 'object' && this.config.show.addPlugin)) {
       console.log(`[BugRecorder] ${message}`);
     }
   }
@@ -276,6 +298,7 @@ class BugRecorder {
     this.floatingBar?.destroy();
     this.noteInput?.destroy();
     this.vConsoleIntegration?.destroy();
+    this.recordingResultDialog?.destroy();
 
     this.isInitialized = false;
     console.log('BugRecorder destroyed');

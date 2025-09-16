@@ -5,6 +5,29 @@ declare const html2canvas: any;
 export class Screenshot {
   private onScreenshot?: (data: ScreenshotEvent) => void;
 
+  private isRecorderElement(element: HTMLElement): boolean {
+    if (element.id === 'bug-recorder-floating-bar' || 
+        element.id === 'bug-recorder-note-input') {
+      return true;
+    }
+    
+    // 安全地检查className - 支持字符串和DOMTokenList
+    const className = element.className;
+    if (className) {
+      const classStr = typeof className === 'string' ? className : String(className);
+      if (classStr.includes('bug-recorder')) {
+        return true;
+      }
+    }
+    
+    // 还要检查classList
+    if (element.classList && element.classList.contains('bug-recorder')) {
+      return true;
+    }
+    
+    return false;
+  }
+
   public async takeScreenshot(): Promise<string> {
     try {
       if (typeof html2canvas === 'undefined') {
@@ -20,9 +43,7 @@ export class Screenshot {
         scrollX: 0,
         scrollY: 0,
         ignoreElements: (element: HTMLElement) => {
-          return element.id === 'bug-recorder-floating-bar' || 
-                 element.id === 'bug-recorder-note-input' ||
-                 element.className?.includes('bug-recorder');
+          return this.isRecorderElement(element);
         }
       });
 
@@ -58,9 +79,7 @@ export class Screenshot {
         scrollX: 0,
         scrollY: 0,
         ignoreElements: (element: HTMLElement) => {
-          return element.id === 'bug-recorder-floating-bar' || 
-                 element.id === 'bug-recorder-note-input' ||
-                 element.className?.includes('bug-recorder');
+          return this.isRecorderElement(element);
         }
       });
 
@@ -98,9 +117,7 @@ export class Screenshot {
           scrollX: 0,
           scrollY: 0,
           ignoreElements: (element: HTMLElement) => {
-            return element.id === 'bug-recorder-floating-bar' || 
-                   element.id === 'bug-recorder-note-input' ||
-                   element.className?.includes('bug-recorder');
+            return this.isRecorderElement(element);
           }
         });
 

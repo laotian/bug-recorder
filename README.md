@@ -47,8 +47,11 @@ BugRecorder.init({
 });
 
 // vConsole集成模式
+import VConsole from 'vconsole';
+const vConsole = new VConsole();
+
 BugRecorder.init({
-  show: 'vConsole'
+  show: vConsole  // 直接传递vConsole实例
 });
 ```
 
@@ -67,7 +70,21 @@ BugRecorder.init({
 ### vConsole模式
 - 在vConsole中添加"Bug录制"标签页
 - 控制按钮集成在vConsole面板中
-- 需要页面已加载vConsole
+- **重要**: 直接传递vConsole实例给配置项
+
+```javascript
+// 正确的初始化方式
+import VConsole from 'vconsole';
+import BugRecorder from "codebyai-bug-recorder";
+
+// 1. 先初始化vConsole
+const vConsole = new VConsole();
+
+// 2. 传递vConsole实例给BugRecorder
+BugRecorder.init({
+  show: vConsole  // 传递实例而不是字符串
+});
+```
 
 ## 录制流程
 

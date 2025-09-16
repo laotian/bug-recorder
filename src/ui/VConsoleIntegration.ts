@@ -2,24 +2,36 @@ declare const VConsole: any;
 
 export class VConsoleIntegration {
   private vConsoleInstance: any = null;
+  private plugin: any = null;
   private tabId: string = 'bug_recorder';
   private isInitialized: boolean = false;
-  private onRecordToggle?: () => void;
-  private onStop?: () => void;
-  private onScreenshot?: () => void;
-  private onNote?: () => void;
+  private onShowFloatingBar?: () => void;
+  private onHideFloatingBar?: () => void;
 
-  public init(): boolean {
+  public init(vConsoleInstance?: any): boolean {
     try {
-      if (typeof VConsole === 'undefined' || !(window as any).VConsole) {
-        console.warn('VConsole is not available');
+      // If vConsole instance is provided directly, use it
+      if (vConsoleInstance) {
+        this.vConsoleInstance = vConsoleInstance;
+      } else {
+        // Check if VConsole class is available
+        if (typeof window === 'undefined' || !(window as any).VConsole) {
+          console.warn('VConsole is not available');
+          return false;
+        }
+
+        // Try to find vConsole instance in multiple ways
+        this.vConsoleInstance = this.findVConsoleInstance();
+      }
+      
+      if (!this.vConsoleInstance) {
+        console.warn('VConsole instance not found. Please make sure vConsole is initialized before BugRecorder.');
         return false;
       }
 
-      this.vConsoleInstance = (window as any).VConsole || new VConsole();
-      
-      if (!this.vConsoleInstance) {
-        console.warn('Failed to initialize VConsole instance');
+      // Check if addPlugin method exists
+      if (typeof this.vConsoleInstance.addPlugin !== 'function') {
+        console.warn('VConsole addPlugin method not available');
         return false;
       }
 
@@ -32,42 +44,72 @@ export class VConsoleIntegration {
     }
   }
 
+  private findVConsoleInstance(): any {
+    // Method 1: Check window.vConsole
+    if ((window as any).vConsole && typeof (window as any).vConsole.addPlugin === 'function') {
+      return (window as any).vConsole;
+    }
+
+    // Method 2: Check if there's a global vConsole variable
+    if (typeof (window as any).vConsole !== 'undefined' && typeof (window as any).vConsole.addPlugin === 'function') {
+      return (window as any).vConsole;
+    }
+
+    // Method 3: Check VConsole instances array (VConsole might store instances internally)
+    const VConsoleClass = (window as any).VConsole;
+    if (VConsoleClass && VConsoleClass.instance && typeof VConsoleClass.instance.addPlugin === 'function') {
+      return VConsoleClass.instance;
+    }
+
+    // Method 4: Try to find any vConsole instance in the DOM or global scope
+    // Look for any variable that has the vConsole methods
+    for (const key in window) {
+      try {
+        const obj = (window as any)[key];
+        if (obj && typeof obj === 'object' && typeof obj.addPlugin === 'function' && typeof obj.showPlugin === 'function') {
+          return obj;
+        }
+      } catch (e) {
+        // Ignore errors when accessing window properties
+      }
+    }
+
+    return null;
+  }
+
   private addBugRecorderTab(): void {
     try {
       const tabName = 'Bug录制';
       
-      if (this.vConsoleInstance.addPlugin) {
-        this.vConsoleInstance.addPlugin({
-          id: this.tabId,
-          name: tabName,
-          create: () => {
-            return this.createTabContent();
-          },
-          init: (node: HTMLElement) => {
-            this.setupTabEventListeners(node);
-          }
-        });
-      } else {
-        console.warn('VConsole addPlugin method not available');
-      }
+      // Create plugin using VConsole.VConsolePlugin constructor
+      const VConsoleClass = (window as any).VConsole;
+      this.plugin = new VConsoleClass.VConsolePlugin(this.tabId, tabName);
+      
+      // Bind plugin events
+      this.plugin.on('renderTab', (callback: Function) => {
+        const content = this.createTabContent();
+        callback(content);
+      });
+
+      this.plugin.on('ready', () => {
+        // Setup event listeners after the tab is rendered
+        this.setupTabEventListeners();
+      });
+
+      // Add plugin to vConsole instance
+      this.vConsoleInstance.addPlugin(this.plugin);
+      
     } catch (error) {
       console.error('Failed to add Bug Recorder tab to VConsole:', error);
     }
   }
 
-  private createTabContent(): HTMLElement {
-    const container = document.createElement('div');
-    container.className = 'vc-bug-recorder';
-    container.innerHTML = this.getTabHTML();
-    
-    container.style.cssText = `
-      padding: 15px;
-      background: #fff;
-      height: 100%;
-      box-sizing: border-box;
+  private createTabContent(): string {
+    return `
+      <div class="vc-bug-recorder" style="padding: 15px; background: #fff; height: 100%; box-sizing: border-box;">
+        ${this.getTabHTML()}
+      </div>
     `;
-    
-    return container;
   }
 
   private getTabHTML(): string {
@@ -75,88 +117,88 @@ export class VConsoleIntegration {
       <div class="bug-recorder-panel">
         <div class="recorder-header">
           <h3 style="margin: 0 0 15px 0; color: #333; font-size: 16px;">Bug录制控制</h3>
-          <div class="recorder-status">
-            <span id="recorder-status-text">未录制</span>
+          <div class="recorder-description" style="margin-bottom: 15px; font-size: 14px; color: #666;">
+            通过悬浮栏进行录制操作
           </div>
         </div>
         
-        <div class="recorder-controls">
-          <button id="vconsole-record-toggle" class="vc-btn" style="margin-right: 8px;">开始录制</button>
-          <button id="vconsole-stop" class="vc-btn" style="margin-right: 8px; display: none;">停止录制</button>
-          <button id="vconsole-screenshot" class="vc-btn" style="margin-right: 8px; display: none;">截图</button>
-          <button id="vconsole-note" class="vc-btn">添加备注</button>
+        <div class="floating-bar-controls" style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <button id="vconsole-show-bar" class="vc-control-btn">显示悬浮栏</button>
+          <button id="vconsole-hide-bar" class="vc-control-btn">隐藏悬浮栏</button>
         </div>
         
-        <div class="recorder-info" style="margin-top: 20px; font-size: 12px; color: #666;">
-          <p>• 点击"开始录制"开始记录用户操作</p>
-          <p>• 录制过程中可以截图和添加备注</p>
-          <p>• 停止录制后内容会自动复制到剪贴板</p>
+        <div class="recorder-info" style="font-size: 12px; color: #666;">
+          <p><strong>使用说明：</strong></p>
+          <ul style="margin: 8px 0; padding-left: 16px;">
+            <li>点击"显示悬浮栏"显示录制工具栏</li>
+            <li>通过悬浮栏进行开始/暂停/停止录制</li>
+            <li>录制过程中可以截图和添加备注</li>
+            <li>停止录制后会弹出结果对话框</li>
+          </ul>
         </div>
       </div>
+      <style>
+        .vc-control-btn {
+          padding: 8px 16px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          background: #fff;
+          color: #333;
+          cursor: pointer;
+          font-size: 13px;
+          transition: all 0.2s ease;
+        }
+        
+        .vc-control-btn:hover {
+          background: #f0f0f0;
+          border-color: #999;
+        }
+        
+        .vc-control-btn:active {
+          background: #e0e0e0;
+        }
+        
+        .vc-control-btn:first-child {
+          background: #007bff;
+          color: #fff;
+          border-color: #007bff;
+        }
+        
+        .vc-control-btn:first-child:hover {
+          background: #0056b3;
+          border-color: #0056b3;
+        }
+      </style>
     `;
   }
 
-  private setupTabEventListeners(container: HTMLElement): void {
-    const recordToggleBtn = container.querySelector('#vconsole-record-toggle') as HTMLButtonElement;
-    const stopBtn = container.querySelector('#vconsole-stop') as HTMLButtonElement;
-    const screenshotBtn = container.querySelector('#vconsole-screenshot') as HTMLButtonElement;
-    const noteBtn = container.querySelector('#vconsole-note') as HTMLButtonElement;
+  private setupTabEventListeners(): void {
+    // Find the plugin container in DOM
+    const container = document.querySelector('.vc-bug-recorder');
+    if (!container) {
+      console.warn('Bug recorder container not found in DOM');
+      return;
+    }
 
-    if (recordToggleBtn) {
-      recordToggleBtn.addEventListener('click', () => {
-        this.onRecordToggle?.();
+    const showBarBtn = container.querySelector('#vconsole-show-bar') as HTMLButtonElement;
+    const hideBarBtn = container.querySelector('#vconsole-hide-bar') as HTMLButtonElement;
+
+    if (showBarBtn) {
+      showBarBtn.addEventListener('click', () => {
+        this.onShowFloatingBar?.();
       });
     }
 
-    if (stopBtn) {
-      stopBtn.addEventListener('click', () => {
-        this.onStop?.();
-      });
-    }
-
-    if (screenshotBtn) {
-      screenshotBtn.addEventListener('click', () => {
-        this.onScreenshot?.();
-      });
-    }
-
-    if (noteBtn) {
-      noteBtn.addEventListener('click', () => {
-        this.onNote?.();
+    if (hideBarBtn) {
+      hideBarBtn.addEventListener('click', () => {
+        this.onHideFloatingBar?.();
       });
     }
   }
 
   public updateRecordingState(isRecording: boolean, isPaused: boolean): void {
-    if (!this.isInitialized) return;
-
-    try {
-      const container = document.querySelector('.vc-bug-recorder');
-      if (!container) return;
-
-      const recordToggleBtn = container.querySelector('#vconsole-record-toggle') as HTMLButtonElement;
-      const stopBtn = container.querySelector('#vconsole-stop') as HTMLButtonElement;
-      const screenshotBtn = container.querySelector('#vconsole-screenshot') as HTMLButtonElement;
-      const statusText = container.querySelector('#recorder-status-text') as HTMLSpanElement;
-
-      if (recordToggleBtn && stopBtn && screenshotBtn && statusText) {
-        if (isRecording) {
-          recordToggleBtn.textContent = isPaused ? '继续录制' : '暂停录制';
-          stopBtn.style.display = 'inline-block';
-          screenshotBtn.style.display = isPaused ? 'none' : 'inline-block';
-          statusText.textContent = isPaused ? '已暂停' : '录制中';
-          statusText.style.color = isPaused ? '#f39c12' : '#27ae60';
-        } else {
-          recordToggleBtn.textContent = '开始录制';
-          stopBtn.style.display = 'none';
-          screenshotBtn.style.display = 'none';
-          statusText.textContent = '未录制';
-          statusText.style.color = '#95a5a6';
-        }
-      }
-    } catch (error) {
-      console.error('Failed to update recording state in VConsole:', error);
-    }
+    // VConsole integration no longer manages recording state directly
+    // Recording state is managed by the floating bar
   }
 
   public showMessage(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
@@ -191,15 +233,11 @@ export class VConsoleIntegration {
   }
 
   public setEventListeners(callbacks: {
-    onRecordToggle?: () => void;
-    onStop?: () => void;
-    onScreenshot?: () => void;
-    onNote?: () => void;
+    onShowFloatingBar?: () => void;
+    onHideFloatingBar?: () => void;
   }): void {
-    this.onRecordToggle = callbacks.onRecordToggle;
-    this.onStop = callbacks.onStop;
-    this.onScreenshot = callbacks.onScreenshot;
-    this.onNote = callbacks.onNote;
+    this.onShowFloatingBar = callbacks.onShowFloatingBar;
+    this.onHideFloatingBar = callbacks.onHideFloatingBar;
   }
 
   public isAvailable(): boolean {
@@ -207,7 +245,7 @@ export class VConsoleIntegration {
   }
 
   public destroy(): void {
-    if (this.vConsoleInstance && this.vConsoleInstance.removePlugin) {
+    if (this.vConsoleInstance && this.vConsoleInstance.removePlugin && this.plugin) {
       try {
         this.vConsoleInstance.removePlugin(this.tabId);
       } catch (error) {
@@ -217,5 +255,6 @@ export class VConsoleIntegration {
     
     this.isInitialized = false;
     this.vConsoleInstance = null;
+    this.plugin = null;
   }
 }

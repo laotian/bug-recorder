@@ -91,10 +91,24 @@ export class UserActionListener {
     let current: HTMLElement | null = element;
     while (current) {
       if (current.id === 'bug-recorder-floating-bar' || 
-          current.id === 'bug-recorder-note-input' ||
-          current.className?.includes('bug-recorder')) {
+          current.id === 'bug-recorder-note-input') {
         return true;
       }
+      
+      // 安全地检查className - 支持字符串和DOMTokenList
+      const className = current.className;
+      if (className) {
+        const classStr = typeof className === 'string' ? className : String(className);
+        if (classStr.includes('bug-recorder')) {
+          return true;
+        }
+      }
+      
+      // 还要检查classList
+      if (current.classList && current.classList.contains('bug-recorder')) {
+        return true;
+      }
+      
       current = current.parentElement;
     }
     return false;
