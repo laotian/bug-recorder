@@ -14,7 +14,7 @@ export class RecordingResultDialog {
     dialog.id = 'bug-recorder-result-dialog';
     dialog.innerHTML = this.getDialogHTML();
     dialog.style.cssText = this.getDialogStyles();
-    
+
     document.body.appendChild(dialog);
     return dialog;
   }
@@ -217,6 +217,7 @@ export class RecordingResultDialog {
       width: 100%;
       height: 100%;
       display: none;
+      z-index: 1000;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     `;
   }
@@ -262,32 +263,32 @@ export class RecordingResultDialog {
   private async copyContent(): Promise<void> {
     const textarea = this.element.querySelector('#recording-content') as HTMLTextAreaElement;
     const copyBtn = this.element.querySelector('#copy-dialog-btn') as HTMLButtonElement;
-    
+
     try {
       await navigator.clipboard.writeText(textarea.value);
-      
+
       // 显示复制成功反馈
       const originalText = copyBtn.textContent;
       copyBtn.textContent = '已复制';
       copyBtn.classList.add('copied');
-      
+
       setTimeout(() => {
         copyBtn.textContent = originalText;
         copyBtn.classList.remove('copied');
       }, 2000);
-      
+
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      
+
       // 降级方案：选中文本
       textarea.select();
       textarea.setSelectionRange(0, 99999);
-      
+
       try {
         document.execCommand('copy');
         copyBtn.textContent = '已复制';
         copyBtn.classList.add('copied');
-        
+
         setTimeout(() => {
           copyBtn.textContent = '复制录制内容';
           copyBtn.classList.remove('copied');
@@ -301,23 +302,23 @@ export class RecordingResultDialog {
   private async copyCliCommand(): Promise<void> {
     const copyCliBtn = this.element.querySelector('#copy-cli-btn') as HTMLButtonElement;
     const cliCommand = 'npx --registry=https://registry.npmmirror.com codebyai-bug-recorder save';
-    
+
     try {
       await navigator.clipboard.writeText(cliCommand);
-      
+
       // 显示复制成功反馈
       const originalText = copyCliBtn.textContent;
       copyCliBtn.textContent = '已复制';
       copyCliBtn.classList.add('copied');
-      
+
       setTimeout(() => {
         copyCliBtn.textContent = originalText;
         copyCliBtn.classList.remove('copied');
       }, 2000);
-      
+
     } catch (error) {
       console.error('Failed to copy CLI command to clipboard:', error);
-      
+
       // 降级方案：使用execCommand
       try {
         const tempInput = document.createElement('input');
@@ -326,10 +327,10 @@ export class RecordingResultDialog {
         tempInput.select();
         document.execCommand('copy');
         document.body.removeChild(tempInput);
-        
+
         copyCliBtn.textContent = '已复制';
         copyCliBtn.classList.add('copied');
-        
+
         setTimeout(() => {
           copyCliBtn.textContent = '复制命令行';
           copyCliBtn.classList.remove('copied');
@@ -343,10 +344,10 @@ export class RecordingResultDialog {
   public show(content: string): void {
     const textarea = this.element.querySelector('#recording-content') as HTMLTextAreaElement;
     textarea.value = content;
-    
+
     this.isVisible = true;
     this.element.style.display = 'block';
-    
+
     // 添加出现动画
     requestAnimationFrame(() => {
       this.element.style.opacity = '1';

@@ -122,11 +122,31 @@ export class NetworkListener {
         body: this.serializeRequestBody(requestBody, url)
       };
 
+      // 根据responseType获取响应内容
+      let responseBody: string = '';
+      try {
+        if (xhr.responseType === '' || xhr.responseType === 'text') {
+          responseBody = xhr.responseText || '';
+        } else if (xhr.responseType === 'json') {
+          responseBody = JSON.stringify(xhr.response) || '';
+        } else if (xhr.responseType === 'blob') {
+          responseBody = '[Blob Response - Content not recorded]';
+        } else if (xhr.responseType === 'arraybuffer') {
+          responseBody = '[ArrayBuffer Response - Content not recorded]';
+        } else if (xhr.responseType === 'document') {
+          responseBody = '[Document Response - Content not recorded]';
+        } else {
+          responseBody = String(xhr.response || '');
+        }
+      } catch (error) {
+        responseBody = '[Unable to read response - ' + xhr.responseType + ']';
+      }
+
       const response: NetworkResponse = {
         status: xhr.status,
         statusText: xhr.statusText,
         headers: responseHeaders,
-        body: this.serializeResponseBody(xhr.responseText, url, xhr.status)
+        body: this.serializeResponseBody(responseBody, url, xhr.status)
       };
 
       const networkData: XhrEvent = {

@@ -30,7 +30,7 @@ npm install codebyai-bug-recorder
 import BugRecorder from "codebyai-bug-recorder";
 
 // 显示悬浮控制条
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar'
 });
 ```
@@ -39,12 +39,12 @@ BugRecorder.init({
 
 ```javascript
 // 悬浮控制条模式（默认显示）
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar'
 });
 
 // 隐藏悬浮条模式（快捷键Ctrl+Alt+R控制）
-BugRecorder.init({
+new BugRecorder().init({
   show: 'hidden_bar'
 });
 
@@ -52,18 +52,18 @@ BugRecorder.init({
 import VConsole from 'vconsole';
 const vConsole = new VConsole();
 
-BugRecorder.init({
+new BugRecorder().init({
   show: vConsole  // 直接传递vConsole实例
 });
 
 // 指定截图区域模式
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar',
   screenshotElement: '#app'  // 只截取指定CSS选择器对应的DOM区域
 });
 
 // 过滤网络请求模式
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar',
   ignoreRequestUrls: [
     '/api/heartbeat',           // 忽略心跳请求
@@ -74,7 +74,7 @@ BugRecorder.init({
 });
 
 // 过滤console输出模式
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar',
   ignoreConsoleContents: [
     '[DEBUG]',                  // 忽略调试日志
@@ -85,7 +85,7 @@ BugRecorder.init({
 });
 
 // 组合配置模式
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar',
   screenshotElement: '#app',
   ignoreRequestUrls: ['/api/heartbeat', '/static/'],
@@ -120,7 +120,7 @@ import BugRecorder from "codebyai-bug-recorder";
 const vConsole = new VConsole();
 
 // 2. 传递vConsole实例给BugRecorder
-BugRecorder.init({
+new BugRecorder().init({
   show: vConsole  // 传递实例而不是字符串
 });
 ```
@@ -141,19 +141,19 @@ BugRecorder.init({
 **示例用法：**
 ```javascript
 // 只截取主容器区域
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar',
   screenshotElement: '#main-container'
 });
 
 // 只截取内容区域
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar', 
   screenshotElement: '.content-wrapper'
 });
 
 // 不指定则截取整个页面（默认行为）
-BugRecorder.init({
+new BugRecorder().init({
   show: 'bar'
 });
 ```
