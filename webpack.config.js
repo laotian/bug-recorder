@@ -33,7 +33,6 @@ export default {
     outputModule: true
   },
   externals: {
-    'html2canvas': 'html2canvas',
     'vconsole': 'VConsole'
   }
 };

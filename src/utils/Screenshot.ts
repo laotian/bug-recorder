@@ -1,6 +1,5 @@
 import { ScreenshotEvent } from '../types';
-
-declare const html2canvas: any;
+import * as domToImage from 'dom-to-image';
 
 export class Screenshot {
   private onScreenshot?: (data: ScreenshotEvent) => void;
@@ -31,27 +30,24 @@ export class Screenshot {
 
   public async takeScreenshot(): Promise<string> {
     try {
-      if (typeof html2canvas === 'undefined') {
-        throw new Error('html2canvas is not available. Please include html2canvas library.');
-      }
-
       // 获取目标元素，如果指定了 screenshotElement 则使用该元素，否则使用 document.body
       const targetElement = this.getTargetElement();
       
-      const canvas = await html2canvas(targetElement, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 0.8,
-        height: targetElement === document.body ? window.innerHeight : targetElement.scrollHeight,
+      const dataUrl = await domToImage.toPng(targetElement, {
+        quality: 1.0,
+        bgcolor: '#ffffff',
         width: targetElement === document.body ? window.innerWidth : targetElement.scrollWidth,
-        scrollX: 0,
-        scrollY: 0,
-        ignoreElements: (element: HTMLElement) => {
-          return this.isRecorderElement(element);
+        height: targetElement === document.body ? window.innerHeight : targetElement.scrollHeight,
+        style: {
+          // 确保输入框文本正确显示
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        },
+        filter: (node: HTMLElement) => {
+          // 过滤掉录制器相关元素
+          return !this.isRecorderElement(node);
         }
       });
-
-      const dataUrl = canvas.toDataURL('image/png', 0.8);
       
       const screenshotData: ScreenshotEvent = {
         dataUrl
@@ -68,29 +64,22 @@ export class Screenshot {
 
   public async takeViewportScreenshot(): Promise<string> {
     try {
-      if (typeof html2canvas === 'undefined') {
-        throw new Error('html2canvas is not available. Please include html2canvas library.');
-      }
-
       // 获取目标元素，如果指定了 screenshotElement 则使用该元素，否则使用 document.documentElement
       const targetElement = this.getTargetElement() || document.documentElement;
       
-      const canvas = await html2canvas(targetElement, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 0.8,
-        height: targetElement === document.documentElement ? window.innerHeight : Math.min(targetElement.scrollHeight, window.innerHeight),
+      const dataUrl = await domToImage.toPng(targetElement, {
+        quality: 1.0,
+        bgcolor: '#ffffff',
         width: targetElement === document.documentElement ? window.innerWidth : Math.min(targetElement.scrollWidth, window.innerWidth),
-        x: targetElement === document.documentElement ? window.scrollX : 0,
-        y: targetElement === document.documentElement ? window.scrollY : 0,
-        scrollX: 0,
-        scrollY: 0,
-        ignoreElements: (element: HTMLElement) => {
-          return this.isRecorderElement(element);
+        height: targetElement === document.documentElement ? window.innerHeight : Math.min(targetElement.scrollHeight, window.innerHeight),
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        },
+        filter: (node: HTMLElement) => {
+          return !this.isRecorderElement(node);
         }
       });
-
-      const dataUrl = canvas.toDataURL('image/png', 0.8);
       
       const screenshotData: ScreenshotEvent = {
         dataUrl
@@ -107,31 +96,37 @@ export class Screenshot {
 
   public async takeFullPageScreenshot(): Promise<string> {
     try {
-      if (typeof html2canvas === 'undefined') {
-        throw new Error('html2canvas is not available. Please include html2canvas library.');
-      }
-
       const originalScrollTop = window.scrollY;
       const originalScrollLeft = window.scrollX;
 
       try {
-        // 获取目标元素，如果指定了 screenshotElement 则使用该元素，否则使用 document.body
+        // 获取目标元素，如果指定了 screenshotElement 则使用该元素，否则使用 document.documentElement
         const targetElement = this.getTargetElement();
         
-        const canvas = await html2canvas(targetElement, {
-          useCORS: true,
-          allowTaint: true,
-          scale: 0.6,
-          height: targetElement === document.body ? document.body.scrollHeight : targetElement.scrollHeight,
-          width: targetElement === document.body ? document.body.scrollWidth : targetElement.scrollWidth,
-          scrollX: 0,
-          scrollY: 0,
-          ignoreElements: (element: HTMLElement) => {
-            return this.isRecorderElement(element);
+        // 对于全页截图，使用 document.documentElement 而不是 document.body
+        const screenshotTarget = targetElement === document.body ? document.documentElement : targetElement;
+        
+        const dataUrl = await domToImage.toPng(screenshotTarget, {
+          quality: 1.0,
+          bgcolor: '#ffffff',
+          width: screenshotTarget === document.documentElement ? 
+            Math.max(document.body.scrollWidth, document.body.offsetWidth, 
+                    document.documentElement.clientWidth, document.documentElement.scrollWidth, 
+                    document.documentElement.offsetWidth) : 
+            targetElement.scrollWidth,
+          height: screenshotTarget === document.documentElement ? 
+            Math.max(document.body.scrollHeight, document.body.offsetHeight, 
+                    document.documentElement.clientHeight, document.documentElement.scrollHeight, 
+                    document.documentElement.offsetHeight) : 
+            targetElement.scrollHeight,
+          style: {
+            transform: 'scale(1)',
+            transformOrigin: 'top left'
+          },
+          filter: (node: HTMLElement) => {
+            return !this.isRecorderElement(node);
           }
         });
-
-        const dataUrl = canvas.toDataURL('image/png', 0.7);
         
         const screenshotData: ScreenshotEvent = {
           dataUrl
@@ -175,22 +170,8 @@ export class Screenshot {
     return document.body;
   }
 
-  public static isHtml2CanvasAvailable(): boolean {
-    return typeof html2canvas !== 'undefined';
-  }
-
-  public static async loadHtml2Canvas(): Promise<void> {
-    if (this.isHtml2CanvasAvailable()) {
-      return;
-    }
-
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load html2canvas'));
-      document.head.appendChild(script);
-    });
+  public static isDomToImageAvailable(): boolean {
+    return typeof domToImage !== 'undefined';
   }
 
   public dataUrlToBlob(dataUrl: string): Blob {
@@ -238,4 +219,5 @@ export class Screenshot {
       }
     });
   }
+
 }

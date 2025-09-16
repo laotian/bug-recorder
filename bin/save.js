@@ -12,7 +12,7 @@ function readClipboard() {
     // 检查操作系统
     const platform = process.platform;
     let command;
-    
+
     if (platform === 'darwin') {
       command = 'pbpaste';
     } else if (platform === 'win32') {
@@ -21,7 +21,7 @@ function readClipboard() {
       // Linux
       command = 'xclip -selection clipboard -o';
     }
-    
+
     const clipboardContent = execSync(command, { encoding: 'utf8' });
     return clipboardContent;
   } catch (error) {
@@ -42,29 +42,29 @@ function extractAndSaveImages(content) {
   const images = [];
   let match;
   let imageNo = 1;
-  
+
   while ((match = base64ImageRegex.exec(content)) !== null) {
     const [fullMatch, altText, base64Data] = match;
-    const filename = `tapd_image_${imageNo}.png`;
-    
+    const filename = `bug_report_image_${imageNo}.png`;
+
     try {
       // 解码base64并保存为PNG文件
       const buffer = Buffer.from(base64Data, 'base64');
       fs.writeFileSync(filename, buffer);
-      
+
       images.push({
         originalMatch: fullMatch,
         filename: filename,
         altText: altText
       });
-      
+
       console.log(`保存图片: ${filename}`);
       imageNo++;
     } catch (error) {
       console.error(`保存图片 ${filename} 失败:`, error.message);
     }
   }
-  
+
   return images;
 }
 
@@ -73,7 +73,7 @@ function extractAndSaveImages(content) {
  */
 function replaceImageReferences(content, images) {
   let updatedContent = content;
-  
+
   images.forEach(image => {
     // 替换原始的base64图片引用为本地文件引用
     updatedContent = updatedContent.replace(
@@ -81,7 +81,7 @@ function replaceImageReferences(content, images) {
       `![${image.altText}](${image.filename})`
     );
   });
-  
+
   return updatedContent;
 }
 
@@ -89,8 +89,8 @@ function replaceImageReferences(content, images) {
  * 保存处理后的markdown内容
  */
 function saveMarkdownContent(content) {
-  const filename = 'tapd_bug_record.md';
-  
+  const filename = 'bug_record.md';
+
   try {
     fs.writeFileSync(filename, content, 'utf8');
     console.log(`保存markdown文件: ${filename}`);
@@ -105,49 +105,49 @@ function saveMarkdownContent(content) {
  */
 function main() {
   console.log('正在读取剪贴板内容...');
-  
+
   // 读取剪贴板内容
   const clipboardContent = readClipboard();
-  
+
   if (!clipboardContent || !clipboardContent.trim()) {
     console.error('剪贴板内容为空');
     process.exit(1);
   }
-  
+
   console.log('剪贴板内容读取成功');
-  
+
   // 检查是否包含base64图片
   const hasBase64Images = /data:image\/png;base64,/.test(clipboardContent);
-  
+
   if (!hasBase64Images) {
     console.log('未找到base64图片，直接保存markdown内容');
     saveMarkdownContent(clipboardContent);
     return;
   }
-  
+
   console.log('正在提取并保存图片...');
-  
+
   // 提取并保存图片
   const images = extractAndSaveImages(clipboardContent);
-  
+
   if (images.length === 0) {
     console.log('未找到有效的base64图片');
     saveMarkdownContent(clipboardContent);
     return;
   }
-  
+
   console.log(`成功提取 ${images.length} 张图片`);
-  
+
   // 替换图片引用
   console.log('正在更新markdown中的图片引用...');
   const updatedContent = replaceImageReferences(clipboardContent, images);
-  
+
   // 保存处理后的markdown文件
   saveMarkdownContent(updatedContent);
-  
+
   console.log('处理完成!');
   console.log(`- 图片文件: ${images.map(img => img.filename).join(', ')}`);
-  console.log('- Markdown文件: tapd_bug_record.md');
+  console.log('- Markdown文件: bug_record.md');
 }
 
 // 检查Node.js版本
