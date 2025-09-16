@@ -124,27 +124,30 @@
   <script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>
   
   <!-- BugRecorder -->
-  <script src="./dist/index.js"></script>
-
-  <script>
+  <script type="module">
+    import BugRecorder from './dist/index.js';
+    
     let recorder = null;
     let vConsole = null;
+    
+    // 将函数添加到window对象，以便HTML按钮可以调用
+    window.BugRecorder = BugRecorder;
 
-    function initBar() {
+    window.initBar = function() {
       destroyRecorder();
       recorder = new BugRecorder();
       recorder.init({ show: 'bar' });
       console.log('BugRecorder initialized in bar mode');
     }
 
-    function initHiddenBar() {
+    window.initHiddenBar = function() {
       destroyRecorder();
       recorder = new BugRecorder();
       recorder.init({ show: 'hidden_bar' });
       console.log('BugRecorder initialized in hidden_bar mode. Press Ctrl+Alt+R to toggle visibility');
     }
 
-    function initVConsole() {
+    window.initVConsole = function() {
       destroyRecorder();
       if (!vConsole) {
         vConsole = new VConsole();
@@ -154,7 +157,7 @@
       console.log('BugRecorder initialized in vConsole mode');
     }
 
-    function initWithScreenshotElement() {
+    window.initWithScreenshotElement = function() {
       destroyRecorder();
       recorder = new BugRecorder();
       recorder.init({ 
@@ -164,7 +167,7 @@
       console.log('BugRecorder initialized with screenshot target: #screenshot-target');
     }
 
-    function destroyRecorder() {
+    window.destroyRecorder = function() {
       if (recorder) {
         recorder.destroy();
         recorder = null;
@@ -172,21 +175,21 @@
       }
     }
 
-    // 测试函数
-    function testClick() {
+    // 测试函数 - 添加到window对象以便HTML调用
+    window.testClick = function() {
       console.log('Test button clicked');
       alert('按钮点击测试');
     }
 
-    function testAlert() {
+    window.testAlert = function() {
       alert('这是一个测试弹窗');
     }
 
-    function testLink() {
+    window.testLink = function() {
       console.log('Link clicked');
     }
 
-    function testXHR() {
+    window.testXHR = function() {
       const xhr = new XMLHttpRequest();
       xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/1');
       xhr.setRequestHeader('Content-Type', 'application/json');
@@ -196,7 +199,7 @@
       xhr.send();
     }
 
-    function testFetch() {
+    window.testFetch = function() {
       fetch('https://jsonplaceholder.typicode.com/posts', {
         method: 'POST',
         headers: {
@@ -213,7 +216,7 @@
       .catch(error => console.error('Fetch Error:', error));
     }
 
-    function testFormData() {
+    window.testFormData = function() {
       const formData = new FormData();
       formData.append('name', 'test');
       formData.append('value', '123');
@@ -227,33 +230,33 @@
       .catch(error => console.error('FormData Error:', error));
     }
 
-    function testConsoleLog() {
+    window.testConsoleLog = function() {
       console.log('This is a test log message', { data: 'example' });
     }
 
-    function testConsoleError() {
+    window.testConsoleError = function() {
       console.error('This is a test error message', new Error('Test error'));
     }
 
-    function testConsoleWarn() {
+    window.testConsoleWarn = function() {
       console.warn('This is a test warning message');
     }
 
-    function testError() {
+    window.testError = function() {
       throw new Error('This is a test thrown error');
     }
 
-    function testURLChange() {
+    window.testURLChange = function() {
       window.location.hash = '#test-' + Date.now();
     }
 
-    function testHistoryPush() {
+    window.testHistoryPush = function() {
       history.pushState({}, 'Test Page', '/test-' + Date.now());
     }
 
     // 页面加载完成后自动初始化bar模式
     window.addEventListener('load', function() {
-      setTimeout(initBar, 1000);
+      setTimeout(() => window.initBar(), 1000);
     });
   </script>
 </body>

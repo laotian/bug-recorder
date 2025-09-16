@@ -1,6 +1,10 @@
-const path = require('path');
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-module.exports = {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default {
   entry: './src/index.ts',
   module: {
     rules: [
@@ -18,24 +22,18 @@ module.exports = {
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
     library: {
-      name: 'BugRecorder',
-      type: 'umd',
-      export: 'default'
+      type: 'module'
     },
-    globalObject: 'this',
+    environment: {
+      module: true
+    },
+    chunkFormat: 'module'
+  },
+  experiments: {
+    outputModule: true
   },
   externals: {
-    'html2canvas': {
-      commonjs: 'html2canvas',
-      commonjs2: 'html2canvas',
-      amd: 'html2canvas',
-      root: 'html2canvas'
-    },
-    'vconsole': {
-      commonjs: 'vconsole',
-      commonjs2: 'vconsole', 
-      amd: 'vconsole',
-      root: 'VConsole'
-    }
+    'html2canvas': 'html2canvas',
+    'vconsole': 'VConsole'
   }
 };
