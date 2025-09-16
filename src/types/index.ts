@@ -3,6 +3,8 @@ export type ShowMode = 'bar' | 'hidden_bar' | 'vConsole';
 export interface BugRecorderConfig {
   show: ShowMode | any; // 'bar' | 'hidden_bar' | vConsole instance
   screenshotElement?: string; // CSS selector for screenshot target element
+  ignoreRequestUrls?: (string | RegExp)[]; // Array of URL patterns to ignore in network requests
+  ignoreConsoleContents?: (string | RegExp)[]; // Array of console content patterns to ignore
 }
 
 export interface RecordEvent {

@@ -41,22 +41,29 @@ class BugRecorder {
 
   public init(config: BugRecorderConfig): void {
     if (this.isInitialized) {
-      console.warn('BugRecorder is already initialized');
       return;
     }
 
     this.config = { ...config };
-    
+
     // 设置截图目标元素
     if (config.screenshotElement) {
       this.screenshot.setScreenshotElement(config.screenshotElement);
     }
-    
+
+    // 设置网络请求忽略URL
+    if (config.ignoreRequestUrls) {
+      this.networkListener.setIgnoreRequestUrls(config.ignoreRequestUrls);
+    }
+
+    // 设置console内容忽略规则
+    if (config.ignoreConsoleContents) {
+      this.consoleListener.setIgnoreConsoleContents(config.ignoreConsoleContents);
+    }
+
     this.setupEventListeners();
     this.initializeUI();
     this.isInitialized = true;
-
-    console.log(`BugRecorder initialized in ${config.show} mode`);
   }
 
   private setupEventListeners(): void {
@@ -142,7 +149,7 @@ class BugRecorder {
   private initFloatingBar(callbacks: any, visible: boolean): void {
     this.floatingBar = new FloatingBar();
     this.floatingBar.setEventListeners(callbacks);
-    
+
     if (visible) {
       this.floatingBar.show();
     }
@@ -167,17 +174,17 @@ class BugRecorder {
 
   private initVConsoleIntegration(callbacks: any): void {
     this.vConsoleIntegration = new VConsoleIntegration();
-    
+
     // Check if config.show is a vConsole instance
-    const vConsoleInstance = (typeof this.config.show === 'object' && this.config.show.addPlugin) ? 
+    const vConsoleInstance = (typeof this.config.show === 'object' && this.config.show.addPlugin) ?
       this.config.show : undefined;
-    
+
     const initialized = this.vConsoleIntegration.init(vConsoleInstance);
-    
+
     if (initialized) {
       // Initialize floating bar for vConsole mode (hidden by default)
       this.initFloatingBar(callbacks, false);
-      
+
       // Set VConsole-specific callbacks
       this.vConsoleIntegration.setEventListeners({
         onShowFloatingBar: () => {
@@ -268,7 +275,7 @@ class BugRecorder {
 
   private updateUIRecordingState(): void {
     const state = this.recordManager.getState();
-    
+
     this.floatingBar?.updateRecordingState(state.isRecording, state.isPaused);
     this.vConsoleIntegration?.updateRecordingState(state.isRecording, state.isPaused);
   }
@@ -277,7 +284,7 @@ class BugRecorder {
     try {
       const summary = this.markdownExporter.generateSummary(events);
       const markdown = summary + this.markdownExporter.exportToMarkdown(events);
-      
+
       // 显示录制结果对话框
       this.recordingResultDialog?.show(markdown);
       this.showUIMessage(`录制完成！共记录${events.length}条操作`, 'success');
@@ -289,10 +296,6 @@ class BugRecorder {
 
   private showUIMessage(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
     this.vConsoleIntegration?.showMessage(message, type);
-    
-    if (this.config.show !== 'vConsole' && !(typeof this.config.show === 'object' && this.config.show.addPlugin)) {
-      console.log(`[BugRecorder] ${message}`);
-    }
   }
 
   public destroy(): void {
@@ -300,14 +303,13 @@ class BugRecorder {
 
     this.stopAllListeners();
     this.keyboardShortcuts?.stopListening();
-    
+
     this.floatingBar?.destroy();
     this.noteInput?.destroy();
     this.vConsoleIntegration?.destroy();
     this.recordingResultDialog?.destroy();
 
     this.isInitialized = false;
-    console.log('BugRecorder destroyed');
   }
 
   public getRecordManager(): RecordManager {

@@ -3,6 +3,7 @@ import { ConsoleEvent } from '../types';
 export class ConsoleListener {
   private isListening: boolean = false;
   private onConsoleEvent?: (data: ConsoleEvent) => void;
+  private ignoreConsoleContents: (string | RegExp)[] = [];
   private originalConsole: {
     log: typeof console.log;
     info: typeof console.info;
@@ -40,6 +41,11 @@ export class ConsoleListener {
               }
             }
           }).join(' ');
+
+          // 检查是否应该忽略此console内容
+          if (this.shouldIgnoreContent(message)) {
+            return;
+          }
 
           const consoleData: ConsoleEvent = {
             level,
@@ -106,9 +112,16 @@ export class ConsoleListener {
   private errorHandler = (event: ErrorEvent) => {
     if (!this.isListening) return;
     
+    const message = `Uncaught Error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`;
+    
+    // 检查是否应该忽略此错误内容
+    if (this.shouldIgnoreContent(message)) {
+      return;
+    }
+    
     const consoleData: ConsoleEvent = {
       level: 'error',
-      message: `Uncaught Error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`,
+      message,
       args: [{
         message: event.message,
         filename: event.filename,
@@ -124,9 +137,16 @@ export class ConsoleListener {
   private rejectionHandler = (event: PromiseRejectionEvent) => {
     if (!this.isListening) return;
     
+    const message = `Unhandled Promise Rejection: ${event.reason}`;
+    
+    // 检查是否应该忽略此Promise拒绝内容
+    if (this.shouldIgnoreContent(message)) {
+      return;
+    }
+    
     const consoleData: ConsoleEvent = {
       level: 'error',
-      message: `Unhandled Promise Rejection: ${event.reason}`,
+      message,
       args: [{ reason: event.reason }]
     };
     
@@ -147,5 +167,20 @@ export class ConsoleListener {
     onConsoleEvent?: (data: ConsoleEvent) => void;
   }): void {
     this.onConsoleEvent = callbacks.onConsoleEvent;
+  }
+
+  public setIgnoreConsoleContents(contents: (string | RegExp)[]): void {
+    this.ignoreConsoleContents = contents || [];
+  }
+
+  private shouldIgnoreContent(content: string): boolean {
+    return this.ignoreConsoleContents.some(pattern => {
+      if (typeof pattern === 'string') {
+        return content.includes(pattern);
+      } else if (pattern instanceof RegExp) {
+        return pattern.test(content);
+      }
+      return false;
+    });
   }
 }

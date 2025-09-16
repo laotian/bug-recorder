@@ -6,6 +6,7 @@ export class NetworkListener {
   private originalXhrOpen: typeof XMLHttpRequest.prototype.open;
   private originalXhrSend: typeof XMLHttpRequest.prototype.send;
   private originalFetch: typeof fetch;
+  private ignoreRequestUrls: (string | RegExp)[] = [];
 
   constructor() {
     this.originalXhrOpen = XMLHttpRequest.prototype.open;
@@ -15,7 +16,7 @@ export class NetworkListener {
 
   public startListening(): void {
     if (this.isListening) return;
-    
+
     this.isListening = true;
     this.interceptXHR();
     this.interceptFetch();
@@ -23,7 +24,7 @@ export class NetworkListener {
 
   public stopListening(): void {
     if (!this.isListening) return;
-    
+
     this.isListening = false;
     XMLHttpRequest.prototype.open = this.originalXhrOpen;
     XMLHttpRequest.prototype.send = this.originalXhrSend;
@@ -32,12 +33,12 @@ export class NetworkListener {
 
   private interceptXHR(): void {
     const self = this;
-    
+
     XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...args: any[]) {
       (this as any).__method = method;
       (this as any).__url = url.toString();
       (this as any).__requestHeaders = {};
-      
+
       return self.originalXhrOpen.apply(this, [method, url, ...args] as any);
     };
 
@@ -62,7 +63,7 @@ export class NetworkListener {
         if (xhr.readyState === 4) {
           self.handleXHRResponse(method, url, requestHeaders, body, xhr);
         }
-        
+
         if (originalOnReadyStateChange) {
           originalOnReadyStateChange.apply(this, arguments as any);
         }
@@ -74,7 +75,7 @@ export class NetworkListener {
 
   private interceptFetch(): void {
     const self = this;
-    
+
     window.fetch = async function(input: RequestInfo | URL, init?: RequestInit) {
       if (!self.isListening) {
         return self.originalFetch.apply(this, [input, init]);
@@ -88,9 +89,9 @@ export class NetworkListener {
       try {
         const response = await self.originalFetch.apply(this, [input, init]);
         const clonedResponse = response.clone();
-        
+
         self.handleFetchResponse(method, url, headers, body, clonedResponse);
-        
+
         return response;
       } catch (error) {
         self.handleFetchError(method, url, headers, body, error);
@@ -107,8 +108,13 @@ export class NetworkListener {
     xhr: XMLHttpRequest
   ): Promise<void> {
     try {
+      // 检查是否应该忽略此URL
+      if (this.shouldIgnoreUrl(url)) {
+        return;
+      }
+
       const responseHeaders = this.parseXHRResponseHeaders(xhr.getAllResponseHeaders());
-      
+
       const request: NetworkRequest = {
         method: method.toUpperCase(),
         url,
@@ -142,6 +148,11 @@ export class NetworkListener {
     response: Response
   ): Promise<void> {
     try {
+      // 检查是否应该忽略此URL
+      if (this.shouldIgnoreUrl(url)) {
+        return;
+      }
+
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((value, key) => {
         responseHeaders[key] = value;
@@ -187,6 +198,11 @@ export class NetworkListener {
     error: any
   ): void {
     try {
+      // 检查是否应该忽略此URL
+      if (this.shouldIgnoreUrl(url)) {
+        return;
+      }
+
       const request: NetworkRequest = {
         method: method.toUpperCase(),
         url,
@@ -214,7 +230,7 @@ export class NetworkListener {
 
   private extractHeaders(headers: HeadersInit): Record<string, string> {
     const result: Record<string, string> = {};
-    
+
     if (headers instanceof Headers) {
       headers.forEach((value, key) => {
         result[key] = value;
@@ -228,7 +244,7 @@ export class NetworkListener {
         result[key] = value;
       });
     }
-    
+
     return result;
   }
 
@@ -319,5 +335,20 @@ export class NetworkListener {
     onNetworkRequest?: (data: XhrEvent) => void;
   }): void {
     this.onNetworkRequest = callbacks.onNetworkRequest;
+  }
+
+  public setIgnoreRequestUrls(urls: (string | RegExp)[]): void {
+    this.ignoreRequestUrls = urls || [];
+  }
+
+  private shouldIgnoreUrl(url: string): boolean {
+    return this.ignoreRequestUrls.some(pattern => {
+      if (typeof pattern === 'string') {
+        return url.includes(pattern);
+      } else if (pattern instanceof RegExp) {
+        return pattern.test(url);
+      }
+      return false;
+    });
   }
 }

@@ -5,8 +5,8 @@
 ## 功能特性
 
 - 🎯 **用户操作记录**: 自动捕获点击、输入等用户操作
-- 🌐 **网络请求监控**: 记录XHR和Fetch请求的详细信息
-- 📝 **控制台日志**: 捕获console输出和错误信息
+- 🌐 **网络请求监控**: 记录XHR和Fetch请求的详细信息，支持URL过滤
+- 📝 **控制台日志**: 捕获console输出和错误信息，支持内容过滤
 - 🔄 **URL变化跟踪**: 监控页面跳转和URL变化
 - 📷 **屏幕截图**: 支持全页面/可视区域/指定元素截图功能
 - 📋 **备注功能**: 添加自定义备注信息
@@ -60,6 +60,36 @@ BugRecorder.init({
 BugRecorder.init({
   show: 'bar',
   screenshotElement: '#app'  // 只截取指定CSS选择器对应的DOM区域
+});
+
+// 过滤网络请求模式
+BugRecorder.init({
+  show: 'bar',
+  ignoreRequestUrls: [
+    '/api/heartbeat',           // 忽略心跳请求
+    '/static/',                 // 忽略静态资源
+    /\/api\/log\/.*/,          // 使用正则表达式忽略日志相关API
+    'analytics.google.com'      // 忽略统计分析请求
+  ]
+});
+
+// 过滤console输出模式
+BugRecorder.init({
+  show: 'bar',
+  ignoreConsoleContents: [
+    '[DEBUG]',                  // 忽略调试日志
+    'WebSocket connection',     // 忽略WebSocket连接日志
+    /React DevTools/,          // 使用正则表达式忽略React DevTools相关日志
+    'analytics'                 // 忽略包含analytics的日志
+  ]
+});
+
+// 组合配置模式
+BugRecorder.init({
+  show: 'bar',
+  screenshotElement: '#app',
+  ignoreRequestUrls: ['/api/heartbeat', '/static/'],
+  ignoreConsoleContents: ['[DEBUG]', /React DevTools/]
 });
 ```
 
@@ -188,6 +218,8 @@ Response (200 OK):
 **参数:**
 - `config.show`: 显示模式，'bar' | 'hidden_bar' | vConsole实例
 - `config.screenshotElement?`: 截图目标元素的CSS选择器，可选参数
+- `config.ignoreRequestUrls?`: 要忽略的网络请求URL模式数组，支持字符串和正则表达式，可选参数
+- `config.ignoreConsoleContents?`: 要忽略的console内容模式数组，支持字符串和正则表达式，可选参数
 
 ### BugRecorder.destroy()
 
@@ -253,11 +285,13 @@ MIT License
 - ✅ 详细记录请求头、请求体、响应状态和响应内容
 - ✅ 支持JSON、FormData等多种数据格式
 - ✅ 自动格式化HTTP报文，便于调试
+- ✅ 灵活的URL过滤机制，支持字符串和正则表达式匹配
 
 #### 📝 控制台日志捕获
 - ✅ 监控console.log、console.error、console.warn等
 - ✅ 捕获JavaScript运行时错误和异常
 - ✅ 保留完整的错误堆栈信息
+- ✅ 灵活的内容过滤机制，支持字符串和正则表达式匹配
 
 #### 🔄 页面跳转追踪
 - ✅ 监控URL变化、History API操作
