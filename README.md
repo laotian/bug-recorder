@@ -171,13 +171,10 @@ Response (200 OK):
 
 ## 依赖要求
 
-- **html2canvas**: 截图功能依赖，需要单独引入
+- **dom-to-image**: 截图功能依赖，已内置无需额外引入
 - **vconsole**: vConsole模式需要，可选依赖
 
 ```html
-<!-- 在HTML中引入html2canvas -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <!-- 如果使用vConsole模式，需要引入vConsole -->
 <script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>
 ```
@@ -200,6 +197,29 @@ Response (200 OK):
 
 获取版本号
 
+## CLI工具
+
+### npx codebyai-bug-recorder save
+
+从剪贴板保存BUG录制内容到本地文件，自动提取base64图片并转换为PNG文件。
+
+**功能特性:**
+- 📋 自动读取剪贴板中的录制内容
+- 🖼️ 提取base64图片并保存为PNG文件（`bug_report_image_1.png`, `bug_report_image_2.png`等）
+- 📝 替换markdown中的图片引用为本地文件路径
+- 💾 保存处理后的内容到`bug_record.md`
+- 🔄 跨平台支持（macOS、Windows、Linux）
+
+**系统要求:**
+- Node.js v18或更高版本
+- Linux系统需要安装xclip：`sudo apt-get install xclip`
+
+**使用方法:**
+```bash
+# 复制BugRecorder的录制结果到剪贴板，然后运行：
+npx codebyai-bug-recorder save
+```
+
 ## 兼容性
 
 - Chrome/Safari 现代浏览器
@@ -212,25 +232,81 @@ MIT License
 
 ## 更新日志
 
-### v1.2.0
-- 📷 新增截图区域指定功能，支持通过CSS选择器指定截图目标元素
-- 🎯 支持任意有效的CSS选择器（ID、类、标签、复合选择器等）
-- 🛡️ 增强错误处理，选择器无效时自动回退到默认行为
-- 📖 完善文档说明和使用示例
+### v1.0.0 (2025-01-20)
 
-### v1.1.0
-- 🎨 全面优化悬浮栏UI，采用紧凑的ButtonGroup设计
-- 🖱️ 重写拖拽逻辑，实现鼠标即时跟随的流畅体验
-- 🎭 更新图标设计：摄像头图标用于截图，笔形图标用于备注
-- ⭕ 停止录制按钮改为红色，视觉效果更明显
-- 📋 新增录制结果对话框，支持预览和复制功能
-- 🔧 修复vConsole集成问题，正确使用VConsole.VConsolePlugin
-- 🔧 修复className.includes()类型错误
-- 🎛️ vConsole模式改为控制悬浮栏显示/隐藏
-- 📚 改进API设计，支持直接传入vConsole实例
+🎉 **首次正式发布** - 完整的BUG录制解决方案
 
-### v1.0.0
-- 初始版本发布
-- 完整的用户操作录制功能
-- 支持多种显示模式
-- Markdown格式导出
+#### 🏗️ 核心架构
+- ✅ 基于TypeScript构建的现代化架构
+- ✅ ES Module支持，webpack打包优化
+- ✅ 模块化设计：核心管理器、监听器、UI组件分离
+- ✅ 完整的类型定义和API文档
+
+#### 🎯 用户操作录制
+- ✅ 智能捕获点击、输入、选择等用户交互
+- ✅ 精确的元素定位：支持ID、Name、Class、XPath等
+- ✅ 输入防抖优化：连续输入只记录最终值，避免重复记录
+- ✅ 密码字段自动过滤，保护敏感信息
+
+#### 🌐 网络请求监控
+- ✅ 完整的XHR和Fetch请求拦截
+- ✅ 详细记录请求头、请求体、响应状态和响应内容
+- ✅ 支持JSON、FormData等多种数据格式
+- ✅ 自动格式化HTTP报文，便于调试
+
+#### 📝 控制台日志捕获
+- ✅ 监控console.log、console.error、console.warn等
+- ✅ 捕获JavaScript运行时错误和异常
+- ✅ 保留完整的错误堆栈信息
+
+#### 🔄 页面跳转追踪
+- ✅ 监控URL变化、History API操作
+- ✅ 记录页面跳转的前后地址变化
+- ✅ 支持SPA路由变化追踪
+
+#### 📷 高质量截图功能
+- ✅ **dom-to-image**技术，提供卓越的截图质量
+- ✅ 三种截图模式：全页面、可视区域、指定元素
+- ✅ 完美的文本渲染，解决输入框文本截断问题
+- ✅ 智能过滤录制器UI元素，确保截图纯净
+- ✅ 支持CSS选择器指定截图区域
+
+#### 📋 备注与注释
+- ✅ 实时添加自定义备注信息
+- ✅ 优雅的备注输入界面
+- ✅ 备注与操作时间线完美结合
+
+#### 🎨 多种显示模式
+- ✅ **悬浮条模式**: 现代化UI设计，支持流畅拖拽
+- ✅ **隐藏模式**: 快捷键(Ctrl+Alt+R)控制显示/隐藏
+- ✅ **vConsole集成**: 无缝集成开发者调试工具
+
+#### 📄 智能报告生成
+- ✅ 自动生成Markdown格式的复现报告
+- ✅ 时间线排序，操作步骤清晰明了
+- ✅ 包含操作汇总统计信息
+- ✅ 一键复制，便于分享和提交
+
+#### 🔧 CLI工具集
+- ✅ **npx codebyai-bug-recorder save**: 剪贴板内容本地化工具
+- ✅ base64图片自动提取和转换为PNG文件
+- ✅ 跨平台剪贴板读取支持
+- ✅ 智能文件命名：`bug_report_image_*.png`、`bug_record.md`
+
+#### 🛠️ 开发体验
+- ✅ 完整的TypeScript类型支持
+- ✅ 模块化API设计，易于集成
+- ✅ 详细的错误处理和调试信息
+- ✅ 零配置开箱即用
+
+#### 🔒 安全与隐私
+- ✅ 本地数据处理，无服务器依赖
+- ✅ 密码字段自动排除
+- ✅ 录制器元素智能过滤
+- ✅ 用户完全控制录制流程
+
+#### 🚀 性能优化
+- ✅ 按需加载和懒初始化
+- ✅ 事件防抖和节流处理
+- ✅ 内存泄漏防护
+- ✅ 轻量级打包，快速加载
