@@ -301,7 +301,7 @@ export class RecordingResultDialog {
 
   private async copyCliCommand(): Promise<void> {
     const copyCliBtn = this.element.querySelector('#copy-cli-btn') as HTMLButtonElement;
-    const cliCommand = 'npx --registry=https://registry.npmmirror.com codebyai-bug-recorder save';
+    const cliCommand = 'npx --registry=https://registry.npmmirror.com codebyai-bug-recorder';
 
     try {
       await navigator.clipboard.writeText(cliCommand);

@@ -8,11 +8,9 @@ export class KeyboardShortcuts {
 
     this.currentKeys.add(event.code);
 
-    if (this.isShortcutPressed(['ControlLeft', 'AltLeft', 'KeyR']) ||
-        this.isShortcutPressed(['ControlRight', 'AltLeft', 'KeyR']) ||
-        this.isShortcutPressed(['ControlLeft', 'AltRight', 'KeyR']) ||
-        this.isShortcutPressed(['ControlRight', 'AltRight', 'KeyR'])) {
-      
+    if (this.isShortcutPressed(['ControlLeft', 'ShiftLeft', 'AltLeft', 'KeyR']) ||
+        this.isShortcutPressed(['ControlRight', 'ShiftRight', 'AltRight', 'KeyR'])) {
+
       event.preventDefault();
       event.stopPropagation();
       this.onToggleVisibility?.();
@@ -29,7 +27,7 @@ export class KeyboardShortcuts {
 
   public startListening(): void {
     if (this.isListening) return;
-    
+
     this.isListening = true;
     document.addEventListener('keydown', this.keydownHandler, true);
     document.addEventListener('keyup', this.keyupHandler, true);
@@ -37,7 +35,7 @@ export class KeyboardShortcuts {
 
   public stopListening(): void {
     if (!this.isListening) return;
-    
+
     this.isListening = false;
     document.removeEventListener('keydown', this.keydownHandler, true);
     document.removeEventListener('keyup', this.keyupHandler, true);
