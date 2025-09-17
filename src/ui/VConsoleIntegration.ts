@@ -10,24 +10,13 @@ export class VConsoleIntegration {
 
   public init(vConsoleInstance?: any): boolean {
     try {
-      // If vConsole instance is provided directly, use it
-      if (vConsoleInstance) {
-        this.vConsoleInstance = vConsoleInstance;
-      } else {
-        // Check if VConsole class is available
-        if (typeof window === 'undefined' || !(window as any).VConsole) {
-          console.warn('VConsole is not available');
-          return false;
-        }
-
-        // Try to find vConsole instance in multiple ways
-        this.vConsoleInstance = this.findVConsoleInstance();
-      }
-      
-      if (!this.vConsoleInstance) {
-        console.warn('VConsole instance not found. Please make sure vConsole is initialized before BugRecorder.');
+      // vConsoleInstance is required
+      if (!vConsoleInstance) {
+        console.warn('VConsole instance is required for initialization');
         return false;
       }
+
+      this.vConsoleInstance = vConsoleInstance;
 
       // Check if addPlugin method exists
       if (typeof this.vConsoleInstance.addPlugin !== 'function') {
@@ -44,45 +33,20 @@ export class VConsoleIntegration {
     }
   }
 
-  private findVConsoleInstance(): any {
-    // Method 1: Check window.vConsole
-    if ((window as any).vConsole && typeof (window as any).vConsole.addPlugin === 'function') {
-      return (window as any).vConsole;
-    }
-
-    // Method 2: Check if there's a global vConsole variable
-    if (typeof (window as any).vConsole !== 'undefined' && typeof (window as any).vConsole.addPlugin === 'function') {
-      return (window as any).vConsole;
-    }
-
-    // Method 3: Check VConsole instances array (VConsole might store instances internally)
-    const VConsoleClass = (window as any).VConsole;
-    if (VConsoleClass && VConsoleClass.instance && typeof VConsoleClass.instance.addPlugin === 'function') {
-      return VConsoleClass.instance;
-    }
-
-    // Method 4: Try to find any vConsole instance in the DOM or global scope
-    // Look for any variable that has the vConsole methods
-    for (const key in window) {
-      try {
-        const obj = (window as any)[key];
-        if (obj && typeof obj === 'object' && typeof obj.addPlugin === 'function' && typeof obj.showPlugin === 'function') {
-          return obj;
-        }
-      } catch (e) {
-        // Ignore errors when accessing window properties
-      }
-    }
-
-    return null;
-  }
 
   private addBugRecorderTab(): void {
     try {
       const tabName = 'Bug录制';
       
+      // Get VConsole class from the instance constructor
+      const VConsoleClass = this.vConsoleInstance.constructor;
+      
+      if (!VConsoleClass || !VConsoleClass.VConsolePlugin) {
+        console.error('VConsole.VConsolePlugin not found in instance constructor');
+        return;
+      }
+      
       // Create plugin using VConsole.VConsolePlugin constructor
-      const VConsoleClass = (window as any).VConsole;
       this.plugin = new VConsoleClass.VConsolePlugin(this.tabId, tabName);
       
       // Bind plugin events
@@ -241,7 +205,7 @@ export class VConsoleIntegration {
   }
 
   public isAvailable(): boolean {
-    return typeof VConsole !== 'undefined' && this.isInitialized;
+    return this.isInitialized && this.vConsoleInstance !== null;
   }
 
   public destroy(): void {
