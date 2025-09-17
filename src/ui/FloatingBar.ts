@@ -4,7 +4,7 @@ export class FloatingBar {
   private isDragging: boolean = false;
   private offsetX: number = 0;
   private offsetY: number = 0;
-  
+
   // 绑定的事件处理函数引用
   private boundMouseMove: (e: MouseEvent) => void;
   private boundMouseUp: () => void;
@@ -20,7 +20,7 @@ export class FloatingBar {
     this.boundMouseMove = this.handleMouseMove.bind(this);
     this.boundMouseUp = this.handleMouseUp.bind(this);
     this.boundMouseDown = this.handleMouseDown.bind(this);
-    
+
     this.element = this.createFloatingBar();
     this.setupEventListeners();
     this.hide();
@@ -31,7 +31,7 @@ export class FloatingBar {
     bar.id = 'bug-recorder-floating-bar';
     bar.innerHTML = this.getBarHTML();
     bar.style.cssText = this.getBarStyles();
-    
+
     document.body.appendChild(bar);
     return bar;
   }
@@ -84,7 +84,7 @@ export class FloatingBar {
         #bug-recorder-floating-bar .control-btn:hover {
           background: rgba(255, 255, 255, 0.15);
           color: #fff;
-          transform: scale(1.05);
+          /*transform: scale(1.05);*/
         }
         
         #bug-recorder-floating-bar .control-btn:active {
@@ -122,7 +122,7 @@ export class FloatingBar {
     this.element.addEventListener('mousedown', this.boundMouseDown);
     document.addEventListener('mousemove', this.boundMouseMove);
     document.addEventListener('mouseup', this.boundMouseUp);
-    
+
     // 添加鼠标离开窗口时的处理
     document.addEventListener('mouseleave', this.boundMouseUp);
 
@@ -154,19 +154,19 @@ export class FloatingBar {
 
   private handleMouseDown(e: MouseEvent): void {
     if ((e.target as HTMLElement).tagName === 'BUTTON') return;
-    
+
     this.isDragging = true;
-    
+
     // 禁用过渡动画以实现即时跟随
     this.element.style.transition = 'none';
-    
+
     // 计算鼠标相对于元素的偏移量
     const rect = this.element.getBoundingClientRect();
     this.offsetX = e.clientX - rect.left;
     this.offsetY = e.clientY - rect.top;
-    
+
     this.element.style.cursor = 'grabbing';
-    
+
     // 阻止默认行为
     e.preventDefault();
   }
@@ -177,27 +177,27 @@ export class FloatingBar {
     // 直接根据鼠标位置计算新位置
     let newLeft = e.clientX - this.offsetX;
     let newTop = e.clientY - this.offsetY;
-    
+
     // 边界检查，确保不超出视窗
     newLeft = Math.max(0, Math.min(window.innerWidth - this.element.offsetWidth, newLeft));
     newTop = Math.max(0, Math.min(window.innerHeight - this.element.offsetHeight, newTop));
-    
+
     // 立即更新位置
     this.element.style.left = newLeft + 'px';
     this.element.style.top = newTop + 'px';
     this.element.style.right = 'auto';
     this.element.style.bottom = 'auto';
-    
+
     // 阻止默认行为
     e.preventDefault();
   }
 
   private handleMouseUp(): void {
     if (!this.isDragging) return;
-    
+
     this.isDragging = false;
     this.element.style.cursor = 'move';
-    
+
     // 恢复过渡动画（仅用于非拖动状态下的其他动画）
     this.element.style.transition = 'box-shadow 0.2s ease';
   }
@@ -241,7 +241,7 @@ export class FloatingBar {
   public showScreenshotFeedback(): void {
     const screenshotBtn = this.element.querySelector('#screenshot-btn') as HTMLButtonElement;
     const originalHTML = screenshotBtn.innerHTML;
-    
+
     screenshotBtn.innerHTML = this.getCheckIcon();
     setTimeout(() => {
       screenshotBtn.innerHTML = this.getCameraIcon();
@@ -265,7 +265,7 @@ export class FloatingBar {
     document.removeEventListener('mousemove', this.boundMouseMove);
     document.removeEventListener('mouseup', this.boundMouseUp);
     document.removeEventListener('mouseleave', this.boundMouseUp);
-    
+
     this.element.remove();
   }
 
