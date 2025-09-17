@@ -115,6 +115,12 @@ export class NetworkListener {
 
       const responseHeaders = this.parseXHRResponseHeaders(xhr.getAllResponseHeaders());
 
+      // 检查Content-Type是否包含application/json
+      const contentType = responseHeaders['content-type'] || '';
+      if (!contentType.includes('application/json')) {
+        return;
+      }
+
       const request: NetworkRequest = {
         method: method.toUpperCase(),
         url,
@@ -177,6 +183,12 @@ export class NetworkListener {
       response.headers.forEach((value, key) => {
         responseHeaders[key] = value;
       });
+
+      // 检查Content-Type是否包含application/json
+      const contentType = responseHeaders['content-type'] || '';
+      if (!contentType.includes('application/json')) {
+        return;
+      }
 
       let responseBody = '';
       try {
