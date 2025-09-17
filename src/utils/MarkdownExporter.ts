@@ -147,7 +147,14 @@ export class MarkdownExporter {
   }
 
   private formatScreenshotEvent(timestamp: string, data: ScreenshotEvent): string {
-    return `* ${timestamp} SCREENSHOT\n![](${data.dataUrl})`;
+    if (data.dataUrl) {
+      // 有实际图片数据的截图
+      return `* ${timestamp} SCREENSHOT\n![](${data.dataUrl})`;
+    } else {
+      // 仅记录截图事件，无图片内容
+      const note = data.note || '用户截图';
+      return `* ${timestamp} SCREENSHOT ${note}`;
+    }
   }
 
   private extractPath(url: string): string {

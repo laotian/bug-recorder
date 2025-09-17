@@ -73,7 +73,9 @@ export interface XhrEvent {
 }
 
 export interface ScreenshotEvent {
-  dataUrl: string;
+  dataUrl?: string;
+  type?: 'manual' | 'auto';
+  note?: string;
 }
 
 export interface NoteEvent {

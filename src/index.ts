@@ -127,6 +127,7 @@ class BugRecorder {
       onRecordToggle: () => this.toggleRecording(),
       onStop: () => this.stopRecording(),
       onScreenshot: () => this.takeScreenshot(),
+      onScreenshotEventOnly: () => this.recordScreenshotEvent(),
       onNote: () => this.showNoteInput()
     };
 
@@ -245,6 +246,22 @@ class BugRecorder {
       console.error('Screenshot failed:', error);
       this.showUIMessage('截图失败', 'error');
     }
+  }
+
+  private recordScreenshotEvent(): void {
+    if (!this.recordManager.isRecording()) {
+      this.showUIMessage('请先开始录制', 'error');
+      return;
+    }
+
+    // 仅记录截图事件，不真正截图
+    this.recordManager.addEvent('SCREENSHOT', {
+      type: 'manual',
+      note: '用户手动截图'
+    });
+
+    this.floatingBar?.showScreenshotFeedback();
+    this.showUIMessage('截图事件已记录', 'success');
   }
 
   private showNoteInput(): void {

@@ -22,7 +22,8 @@ export class Screenshot {
         });
 
         const screenshotData: ScreenshotEvent = {
-          dataUrl
+          dataUrl,
+          type: 'auto'
         };
 
         this.onScreenshot?.(screenshotData);

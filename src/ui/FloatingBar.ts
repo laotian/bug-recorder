@@ -13,6 +13,7 @@ export class FloatingBar {
   private onRecordToggle?: () => void;
   private onStop?: () => void;
   private onScreenshot?: () => void;
+  private onScreenshotEventOnly?: () => void;
   private onNote?: () => void;
 
   constructor() {
@@ -45,7 +46,7 @@ export class FloatingBar {
         <button id="stop-btn" class="control-btn" title="停止录制" style="display: none;">
           ${this.getStopIcon()}
         </button>
-        <button id="screenshot-btn" class="control-btn" title="截图" style="display: none;">
+        <button id="screenshot-btn" class="control-btn" title="截图（Alt+点击仅记录截图事件）" style="display: none;">
           ${this.getCameraIcon()}
         </button>
         <button id="note-btn" class="control-btn" title="添加备注">
@@ -143,7 +144,15 @@ export class FloatingBar {
 
     screenshotBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.onScreenshot?.();
+      
+      // 检查是否按住了Alt键
+      if (e.altKey) {
+        // Alt+点击：仅记录截图事件，不真正截图
+        this.onScreenshotEventOnly?.();
+      } else {
+        // 普通点击：执行真正的截图
+        this.onScreenshot?.();
+      }
     });
 
     noteBtn.addEventListener('click', (e) => {
@@ -252,11 +261,13 @@ export class FloatingBar {
     onRecordToggle?: () => void;
     onStop?: () => void;
     onScreenshot?: () => void;
+    onScreenshotEventOnly?: () => void;
     onNote?: () => void;
   }): void {
     this.onRecordToggle = callbacks.onRecordToggle;
     this.onStop = callbacks.onStop;
     this.onScreenshot = callbacks.onScreenshot;
+    this.onScreenshotEventOnly = callbacks.onScreenshotEventOnly;
     this.onNote = callbacks.onNote;
   }
 

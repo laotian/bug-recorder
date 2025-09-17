@@ -36,7 +36,7 @@ export class RecordingResultDialog {
             ></textarea>
           </div>
           <div class="dialog-footer">
-            <button id="copy-cli-btn" class="dialog-btn copy-cli-btn">复制命令行</button>
+            <button id="copy-cli-btn" class="dialog-btn copy-cli-btn">复制截图处理命令行</button>
             <div class="dialog-footer-right">
               <button id="close-dialog-btn" class="dialog-btn close-btn-text">关闭</button>
               <button id="copy-dialog-btn" class="dialog-btn copy-btn">复制录制内容</button>
@@ -205,6 +205,12 @@ export class RecordingResultDialog {
           background: #28a745;
           border-color: #28a745;
         }
+        
+        #bug-recorder-result-dialog .copy-cli-btn.hidden {
+          visibility: hidden;
+          opacity: 0;
+          pointer-events: none;
+        }
       </style>
     `;
   }
@@ -332,7 +338,7 @@ export class RecordingResultDialog {
         copyCliBtn.classList.add('copied');
 
         setTimeout(() => {
-          copyCliBtn.textContent = '复制命令行';
+          copyCliBtn.textContent = '复制截图剥离命令行';
           copyCliBtn.classList.remove('copied');
         }, 2000);
       } catch (fallbackError) {
@@ -341,9 +347,25 @@ export class RecordingResultDialog {
     }
   }
 
+  private updateCliButtonVisibility(content: string): void {
+    const copyCliBtn = this.element.querySelector('#copy-cli-btn') as HTMLButtonElement;
+    
+    // 检查内容中是否包含base64图片数据
+    const hasBase64Images = content.includes('data:image/');
+    
+    if (hasBase64Images) {
+      copyCliBtn.classList.remove('hidden');
+    } else {
+      copyCliBtn.classList.add('hidden');
+    }
+  }
+
   public show(content: string): void {
     const textarea = this.element.querySelector('#recording-content') as HTMLTextAreaElement;
     textarea.value = content;
+
+    // 检查是否包含真实截图（base64图片数据）
+    this.updateCliButtonVisibility(content);
 
     this.isVisible = true;
     this.element.style.display = 'block';
