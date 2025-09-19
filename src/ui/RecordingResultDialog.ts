@@ -307,7 +307,7 @@ export class RecordingResultDialog {
 
   private async copyCliCommand(): Promise<void> {
     const copyCliBtn = this.element.querySelector('#copy-cli-btn') as HTMLButtonElement;
-    const cliCommand = 'npx --registry=https://registry.npmmirror.com codebyai-bug-recorder';
+    const cliCommand = 'npx codebyai-bug-recorder';
 
     try {
       await navigator.clipboard.writeText(cliCommand);
@@ -349,10 +349,10 @@ export class RecordingResultDialog {
 
   private updateCliButtonVisibility(content: string): void {
     const copyCliBtn = this.element.querySelector('#copy-cli-btn') as HTMLButtonElement;
-    
+
     // 检查内容中是否包含base64图片数据
     const hasBase64Images = content.includes('data:image/');
-    
+
     if (hasBase64Images) {
       copyCliBtn.classList.remove('hidden');
     } else {

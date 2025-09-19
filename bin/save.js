@@ -16,7 +16,7 @@ function readClipboard() {
     if (platform === 'darwin') {
       command = 'pbpaste';
     } else if (platform === 'win32') {
-      command = 'powershell.exe -Command "Get-Clipboard"';
+      command = 'powershell.exe -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard"';
     } else {
       // Linux
       command = 'xclip -selection clipboard -o';

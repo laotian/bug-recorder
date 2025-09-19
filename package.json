@@ -1,6 +1,6 @@
 {
   "name": "codebyai-bug-recorder",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A tool to help QA engineers record bug reproduction processes and page operation data",
   "type": "module",
   "main": "dist/index.js",
