@@ -269,16 +269,18 @@ Response (200 OK):
 
 ## CLI工具
 
-### npx codebyai-bug-recorder save
+### npx codebyai-bug-recorder
 
-从剪贴板保存BUG录制内容到本地文件，自动提取base64图片并转换为PNG文件。
+保存BUG录制内容到本地文件，支持从剪贴板或文件读取内容，自动提取base64图片并转换为PNG文件。
 
 **功能特性:**
-- 📋 自动读取剪贴板中的录制内容
+- 📋 支持从剪贴板读取录制内容
+- 📄 支持从文件读取录制内容（新增）
 - 🖼️ 提取base64图片并保存为PNG文件（`bug_report_image_1.png`, `bug_report_image_2.png`等）
 - 📝 替换markdown中的图片引用为本地文件路径
 - 💾 保存处理后的内容到`bug_record.md`
 - 🔄 跨平台支持（macOS、Windows、Linux）
+- 📖 内置帮助信息
 
 **系统要求:**
 - Node.js v18或更高版本
@@ -286,9 +288,24 @@ Response (200 OK):
 
 **使用方法:**
 ```bash
-# 复制BugRecorder的录制结果到剪贴板，然后运行：
-npx codebyai-bug-recorder save
+# 从剪贴板读取内容（复制BugRecorder的录制结果到剪贴板后运行）
+npx codebyai-bug-recorder
+
+# 从文件读取内容并处理
+npx codebyai-bug-recorder report.md
+
+# 显示帮助信息
+npx codebyai-bug-recorder --help
 ```
+
+**命令格式:**
+```bash
+npx codebyai-bug-recorder [文件路径]
+```
+
+**参数说明:**
+- `文件路径`：要处理的文件路径（可选，未指定时从剪贴板读取）
+- `-h, --help`：显示帮助信息
 
 ## 兼容性
 

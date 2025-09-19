@@ -22,7 +22,10 @@ function readClipboard() {
       command = 'xclip -selection clipboard -o';
     }
 
-    const clipboardContent = execSync(command, { encoding: 'utf8' });
+    const clipboardContent = execSync(command, {
+      encoding: 'utf8',
+      maxBuffer: 1024 * 1024 * 30 // 30MB 缓冲区
+    });
     return clipboardContent;
   } catch (error) {
     console.error('读取剪贴板失败:', error.message);
@@ -32,6 +35,46 @@ function readClipboard() {
     console.error('- Linux: 安装 xclip (sudo apt-get install xclip)');
     process.exit(1);
   }
+}
+
+/**
+ * 从文件读取内容
+ */
+function readFromFile(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      console.error(`文件不存在: ${filePath}`);
+      process.exit(1);
+    }
+
+    const content = fs.readFileSync(filePath, 'utf8');
+    return content;
+  } catch (error) {
+    console.error(`读取文件失败: ${filePath}`, error.message);
+    process.exit(1);
+  }
+}
+
+/**
+ * 显示帮助信息
+ */
+function showHelp() {
+  console.log('BugRecorder Save Tool - 保存BUG录制内容到本地文件');
+  console.log('');
+  console.log('用法:');
+  console.log('  npx codebyai-bug-recorder [文件路径]');
+  console.log('');
+  console.log('参数:');
+  console.log('  文件路径    要处理的文件路径 (可选，未指定时从剪贴板读取)');
+  console.log('');
+  console.log('示例:');
+  console.log('  npx codebyai-bug-recorder              # 从剪贴板读取内容');
+  console.log('  npx codebyai-bug-recorder report.md   # 从文件读取内容');
+  console.log('');
+  console.log('功能:');
+  console.log('  - 自动提取base64图片并保存为PNG文件');
+  console.log('  - 替换markdown中的图片引用为本地文件路径');
+  console.log('  - 保存处理后的内容到bug_record.md');
 }
 
 /**
@@ -101,38 +144,33 @@ function saveMarkdownContent(content) {
 }
 
 /**
- * 主函数
+ * 处理内容的通用函数
  */
-function main() {
-  console.log('正在读取剪贴板内容...');
-
-  // 读取剪贴板内容
-  const clipboardContent = readClipboard();
-
-  if (!clipboardContent || !clipboardContent.trim()) {
-    console.error('剪贴板内容为空');
+function processContent(content, source) {
+  if (!content || !content.trim()) {
+    console.error(`${source}内容为空`);
     process.exit(1);
   }
 
-  console.log('剪贴板内容读取成功');
+  console.log(`${source}内容读取成功`);
 
   // 检查是否包含base64图片
-  const hasBase64Images = /data:image\/png;base64,/.test(clipboardContent);
+  const hasBase64Images = /data:image\/png;base64,/.test(content);
 
   if (!hasBase64Images) {
     console.log('未找到base64图片，直接保存markdown内容');
-    saveMarkdownContent(clipboardContent);
+    saveMarkdownContent(content);
     return;
   }
 
   console.log('正在提取并保存图片...');
 
   // 提取并保存图片
-  const images = extractAndSaveImages(clipboardContent);
+  const images = extractAndSaveImages(content);
 
   if (images.length === 0) {
     console.log('未找到有效的base64图片');
-    saveMarkdownContent(clipboardContent);
+    saveMarkdownContent(content);
     return;
   }
 
@@ -140,7 +178,7 @@ function main() {
 
   // 替换图片引用
   console.log('正在更新markdown中的图片引用...');
-  const updatedContent = replaceImageReferences(clipboardContent, images);
+  const updatedContent = replaceImageReferences(content, images);
 
   // 保存处理后的markdown文件
   saveMarkdownContent(updatedContent);
@@ -148,6 +186,43 @@ function main() {
   console.log('处理完成!');
   console.log(`- 图片文件: ${images.map(img => img.filename).join(', ')}`);
   console.log('- Markdown文件: bug_record.md');
+}
+
+/**
+ * 主函数
+ */
+function main() {
+  // 获取命令行参数
+  const args = process.argv.slice(2);
+
+  // 检查是否需要显示帮助
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp();
+    return;
+  }
+
+  // 检查命令行参数
+  if (args.length > 1) {
+    console.error('错误: 参数过多');
+    console.error('');
+    showHelp();
+    process.exit(1);
+  }
+
+  let content;
+
+  if (args.length === 1) {
+    // 从文件读取
+    const filePath = args[0];
+    console.log(`正在从文件读取内容: ${filePath}`);
+    content = readFromFile(filePath);
+    processContent(content, '文件');
+  } else {
+    // 从剪贴板读取
+    console.log('正在读取剪贴板内容...');
+    content = readClipboard();
+    processContent(content, '剪贴板');
+  }
 }
 
 // 检查Node.js版本
