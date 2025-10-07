@@ -19,7 +19,7 @@
 ## 安装
 
 ```bash
-npm install codebyai-bug-recorder
+npm install @codebyai/bug-recorder
 ```
 
 ## 使用方法
@@ -27,7 +27,7 @@ npm install codebyai-bug-recorder
 ### 基础用法
 
 ```javascript
-import BugRecorder from "codebyai-bug-recorder";
+import BugRecorder from "@codebyai/bug-recorder";
 
 // 显示悬浮控制条
 new BugRecorder().init({
@@ -114,7 +114,7 @@ new BugRecorder().init({
 ```javascript
 // 正确的初始化方式
 import VConsole from 'vconsole';
-import BugRecorder from "codebyai-bug-recorder";
+import BugRecorder from "@codebyai/bug-recorder";
 
 // 1. 先初始化vConsole
 const vConsole = new VConsole();
@@ -269,7 +269,7 @@ Response (200 OK):
 
 ## CLI工具
 
-### npx codebyai-bug-recorder
+### npx @codebyai/bug-recorder
 
 保存BUG录制内容到本地文件，支持从剪贴板或文件读取内容，自动提取base64图片并转换为PNG文件。
 
@@ -289,18 +289,18 @@ Response (200 OK):
 **使用方法:**
 ```bash
 # 从剪贴板读取内容（复制BugRecorder的录制结果到剪贴板后运行）
-npx codebyai-bug-recorder
+npx @codebyai/bug-recorder
 
 # 从文件读取内容并处理
-npx codebyai-bug-recorder report.md
+npx @codebyai/bug-recorder report.md
 
 # 显示帮助信息
-npx codebyai-bug-recorder --help
+npx @codebyai/bug-recorder --help
 ```
 
 **命令格式:**
 ```bash
-npx codebyai-bug-recorder [文件路径]
+npx @codebyai/bug-recorder [文件路径]
 ```
 
 **参数说明:**
@@ -379,7 +379,7 @@ MIT License
 - ✅ 一键复制，便于分享和提交
 
 #### 🔧 CLI工具集
-- ✅ **npx codebyai-bug-recorder save**: 剪贴板内容本地化工具
+- ✅ **npx @codebyai/bug-recorder save**: 剪贴板内容本地化工具
 - ✅ base64图片自动提取和转换为PNG文件
 - ✅ 跨平台剪贴板读取支持
 - ✅ 智能文件命名：`bug_report_image_*.png`、`bug_record.md`
